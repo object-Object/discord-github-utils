@@ -7,6 +7,7 @@ dynamic = ["version"]
 name = "dgu-bot"
 requires-python = ">=3.12"
 dependencies = [
+    "dgu-common",
     "discord-py>=2.4.0",
 ]
 

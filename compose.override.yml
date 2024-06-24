@@ -1,0 +1,9 @@
+# development overrides for compose.yml
+services:
+  bot:
+    build: .
+    environment:
+      ENVIRONMENT: dev
+secrets:
+  env:
+    file: .env

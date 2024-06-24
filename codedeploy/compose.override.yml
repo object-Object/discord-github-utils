@@ -1,0 +1,10 @@
+# production overrides for compose.yml
+services:
+  bot:
+    image: "ghcr.io/object-object/discord-github-utils@${IMAGE_ID}"
+    restart: on-failure
+    environment:
+      ENVIRONMENT: prod
+secrets:
+  env:
+    file: .env

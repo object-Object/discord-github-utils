@@ -10,6 +10,8 @@
 
 -e file:bot
 -e file:common
+    # via dgu-bot
+    # via dgu-infrastructure
 -e file:infrastructure
 aiohttp==3.9.5
     # via discord-py

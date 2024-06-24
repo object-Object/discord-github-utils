@@ -6,7 +6,9 @@ build-backend = "hatchling.build"
 dynamic = ["version"]
 name = "dgu-infrastructure"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "dgu-common",
+]
 
 [tool.rye]
 managed = true
