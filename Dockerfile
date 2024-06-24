@@ -1,8 +1,5 @@
-FROM ghcr.io/astral-sh/uv AS uv
-
+FROM ghcr.io/astral-sh/uv:0.2.15 AS uv
 FROM python:3.12-slim
-
-COPY --from=uv /uv /usr/bin/uv
 
 WORKDIR /app
 
@@ -18,7 +15,9 @@ COPY common/pyproject.toml common/
 COPY common/src/dgu_common/__version__.py common/src/dgu_common/
 RUN mkdir -p common/src/dgu_common && touch common/src/dgu_common/__init__.py
 
-RUN --mount=type=cache,target=/root/.cache/uv \
+# https://github.com/astral-sh/uv/blob/main/docs/docker.md
+RUN --mount=from=uv,source=/uv,target=/bin/uv \
+    --mount=type=cache,target=/root/.cache/uv \
     PYTHONDONTWRITEBYTECODE=1 \
     uv pip install --system \
     --constraint requirements.lock \
