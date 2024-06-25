@@ -26,7 +26,8 @@ RUN --mount=from=uv,source=/uv,target=/bin/uv \
 COPY common/ common/
 COPY bot/ bot/
 
-CMD python -m ghutils.bot.app
+# NOTE: this must be a list, otherwise signals (eg. SIGINT) are not forwarded to the bot
+CMD ["python", "-m", "ghutils.bot.app"]
 
 # HEALTHCHECK \
 #     --interval=15m \
