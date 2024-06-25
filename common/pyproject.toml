@@ -14,10 +14,10 @@ dev-dependencies = []
 
 [tool.hatch.version]
 source = "regex"
-path = "src/ghutils_common/__version__.py"
+path = "src/ghutils/common/__version__.py"
 
 [tool.hatch.metadata]
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/ghutils_common"]
+packages = ["src/ghutils"]

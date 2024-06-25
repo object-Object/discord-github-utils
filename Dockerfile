@@ -9,11 +9,11 @@ COPY requirements.lock ./
 RUN sed -ir 's/^-e /# -e /g' requirements.lock
 
 COPY bot/pyproject.toml bot/
-RUN mkdir -p bot/src/ghutils_bot && touch bot/src/ghutils_bot/__init__.py
+RUN mkdir -p bot/src/ghutils/bot && touch bot/src/ghutils/bot/__init__.py
 
 COPY common/pyproject.toml common/
-COPY common/src/ghutils_common/__version__.py common/src/ghutils_common/
-RUN mkdir -p common/src/ghutils_common && touch common/src/ghutils_common/__init__.py
+COPY common/src/ghutils/common/__version__.py common/src/ghutils/common/
+RUN mkdir -p common/src/ghutils/common && touch common/src/ghutils/common/__init__.py
 
 # https://github.com/astral-sh/uv/blob/main/docs/docker.md
 RUN --mount=from=uv,source=/uv,target=/bin/uv \
@@ -26,7 +26,7 @@ RUN --mount=from=uv,source=/uv,target=/bin/uv \
 COPY bot/ bot/
 COPY common/ common/
 
-CMD python -m ghutils_bot.app
+CMD python -m ghutils.bot.app
 
 # HEALTHCHECK \
 #     --interval=15m \

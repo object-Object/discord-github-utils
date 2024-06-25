@@ -27,13 +27,13 @@ members = [
 ]
 
 [tool.rye.scripts]
-bot = { call="ghutils_bot.app" }
+bot = { call="ghutils.bot.app" }
 
 # Hatch version plugin (so `hatch version` works)
 
 [tool.hatch.version]
 source = "regex"
-path = "common/src/ghutils_common/__version__.py"
+path = "common/src/ghutils/common/__version__.py"
 
 # linting/formatting
 
@@ -61,7 +61,7 @@ extend-ignore = [
 [tool.ruff.lint.isort]
 combine-as-imports = true
 known-first-party = [
-    "ghutils_*",
+    "ghutils",
 ]
 
 # type checking

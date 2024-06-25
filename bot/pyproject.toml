@@ -19,10 +19,10 @@ dev-dependencies = []
 
 [tool.hatch.version]
 source = "regex"
-path = "../common/src/ghutils_common/__version__.py"
+path = "../common/src/ghutils/common/__version__.py"
 
 [tool.hatch.metadata]
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/ghutils_bot"]
+packages = ["src/ghutils"]

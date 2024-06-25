@@ -5,8 +5,8 @@ from discord import Game, Intents
 from discord.ext import commands
 from discord.ext.commands import Bot, NoEntryPointError
 
-from ghutils_bot import cogs
-from ghutils_bot.utils.imports import iter_modules
+from ghutils.bot import cogs
+from ghutils.bot.utils.imports import iter_modules
 
 from .env import EnvSettings
 

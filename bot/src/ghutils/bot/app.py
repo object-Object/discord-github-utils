@@ -4,14 +4,13 @@ import logging
 from discord import VoiceClient
 from discord.utils import setup_logging
 
-from ghutils_bot.core import EnvSettings, GHUtilsBot
+from ghutils.bot.core import EnvSettings, GHUtilsBot
 
 
 async def main():
     setup_logging()
+    logging.getLogger("ghutils").setLevel(logging.DEBUG)
     VoiceClient.warn_nacl = False
-    for name in ["ghutils_bot", "ghutils_common"]:
-        logging.getLogger(name).setLevel(logging.DEBUG)
 
     env = EnvSettings.model_validate({})
     async with GHUtilsBot(env) as bot:
