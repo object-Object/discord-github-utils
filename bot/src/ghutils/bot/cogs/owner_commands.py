@@ -3,8 +3,13 @@ from discord.ext import commands
 from ghutils.bot.core import BaseCog, GHUtilsContext
 
 
-class SyncCog(BaseCog):
-    async def cog_check(self, ctx: GHUtilsContext):
+class OwnerCommandsCog(BaseCog):
+    """Owner-only message commands."""
+
+    async def cog_check(  # pyright: ignore[reportIncompatibleMethodOverride]
+        self,
+        ctx: GHUtilsContext,
+    ) -> bool:
         return await commands.is_owner().predicate(ctx)
 
     @commands.group(invoke_without_command=True)

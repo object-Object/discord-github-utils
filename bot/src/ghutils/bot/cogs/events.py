@@ -10,6 +10,8 @@ logger = logging.getLogger(__name__)
 
 
 class EventsCog(BaseCog):
+    """Cog for event handlers that don't fit anywhere else."""
+
     @Cog.listener()
     async def on_ready(self):
         logger.info(f"Logged in as {self.bot.user}")
