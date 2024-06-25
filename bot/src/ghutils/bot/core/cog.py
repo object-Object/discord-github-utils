@@ -1,11 +1,11 @@
 import logging
 import sys
 from dataclasses import dataclass
-from typing import Any, Self
+from typing import TYPE_CHECKING, Any, Awaitable, Self
 
 from discord.ext.commands import Cog
 
-from .bot import GHUtilsBot
+from .bot import GHUtilsBot, GHUtilsContext
 
 logger = logging.getLogger(__name__)
 
@@ -40,3 +40,10 @@ class BaseCog(Cog):
     def _create_cog(cls, bot: GHUtilsBot) -> Self:
         """Factory method called by `setup` when adding this cog to the bot."""
         return cls(bot)
+
+    if TYPE_CHECKING:
+        # make Pyright allow async cog_check and using GHUtilsContext
+        def cog_check(  # pyright: ignore[reportIncompatibleMethodOverride]
+            self,
+            ctx: GHUtilsContext,
+        ) -> bool | Awaitable[bool]: ...

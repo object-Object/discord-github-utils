@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from discord import Game, Intents
 from discord.ext import commands
-from discord.ext.commands import Bot, NoEntryPointError
+from discord.ext.commands import Bot, Context, NoEntryPointError
 
 from ghutils.bot import cogs
 from ghutils.bot.utils.imports import iter_modules
@@ -31,3 +31,6 @@ class GHUtilsBot(Bot):
                 await self.load_extension(cog)
             except NoEntryPointError:
                 logger.warning(f"No entry point for cog: {cog}")
+
+
+GHUtilsContext = Context[GHUtilsBot]

@@ -72,7 +72,9 @@ pythonVersion = "3.12"
 pythonPlatform = "All"
 
 include = [
-    "*/src",
+    "bot/src",
+    "common/src",
+    "infrastructure/src",
 ]
 exclude = [
     "**/venv",
