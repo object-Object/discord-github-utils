@@ -8,12 +8,12 @@ COPY requirements.lock ./
 # comment out editable requirements, since they're not permitted in constraint files
 RUN sed -ir 's/^-e /# -e /g' requirements.lock
 
-COPY bot/pyproject.toml bot/
-RUN mkdir -p bot/src/ghutils/bot && touch bot/src/ghutils/bot/__init__.py
-
 COPY common/pyproject.toml common/
 COPY common/src/ghutils/common/__version__.py common/src/ghutils/common/
 RUN mkdir -p common/src/ghutils/common && touch common/src/ghutils/common/__init__.py
+
+COPY bot/pyproject.toml bot/
+RUN mkdir -p bot/src/ghutils/bot && touch bot/src/ghutils/bot/__init__.py
 
 # https://github.com/astral-sh/uv/blob/main/docs/docker.md
 RUN --mount=from=uv,source=/uv,target=/bin/uv \
@@ -23,8 +23,8 @@ RUN --mount=from=uv,source=/uv,target=/bin/uv \
     --constraint requirements.lock \
     -e bot -e common
 
-COPY bot/ bot/
 COPY common/ common/
+COPY bot/ bot/
 
 CMD python -m ghutils.bot.app
 
