@@ -1,17 +1,26 @@
 import logging
 import sys
 from dataclasses import dataclass
-from typing import Any, Self
+from typing import Any, Self, cast
 
-from discord.ext.commands import Cog
+from discord.ext.commands import Cog, CogMeta
 
 from .bot import GHUtilsBot
 
 logger = logging.getLogger(__name__)
 
 
+class BaseCogMeta(CogMeta):
+    def __new__(cls, *args: Any, **kwargs: Any) -> CogMeta:
+        if "name" not in kwargs:
+            name = cast(str, args[0]).removesuffix("Cog")
+            if name:
+                kwargs["name"] = name
+        return super().__new__(cls, *args, **kwargs)
+
+
 @dataclass
-class BaseCog(Cog):
+class BaseCog(Cog, metaclass=BaseCogMeta):
     """Base class for GHUtils cogs.
 
     When subclasses are defined, a `setup` function (`cls.setup`) is added to the module

@@ -31,7 +31,8 @@ class GHUtilsBot(Bot):
     async def load_cogs(self):
         for cog in iter_modules(cogs, skip_internal=True):
             try:
-                logger.info(f"Loading cog: {cog}")
+                logger.info(f"Loading extension: {cog}")
                 await self.load_extension(cog)
             except NoEntryPointError:
-                logger.warning(f"No entry point for cog: {cog}")
+                logger.warning(f"No entry point found: {cog}")
+        logger.info("Loaded cogs: " + ", ".join(self.cogs.keys()))

@@ -28,7 +28,7 @@ class ExtensionsCog(BaseCog):
             lambda name: name.startswith(COGS_MODULE),
         )
 
-        with paginate(ctx.reply) as paginator:
+        async with paginate(ctx.reply) as paginator:
             if cogs:
                 paginator.add_line("Cogs:")
                 for name in cogs:

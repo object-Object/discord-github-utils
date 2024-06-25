@@ -1,4 +1,4 @@
-from contextlib import contextmanager
+from contextlib import asynccontextmanager
 from typing import Any, Callable
 
 from discord import Interaction, InteractionType
@@ -32,12 +32,12 @@ def print_command(
     return f"/{command.qualified_name} {args}"
 
 
-@contextmanager
-def paginate(
+@asynccontextmanager
+async def paginate(
     page_consumer: Callable[[str], Any],
     paginator: Paginator = Paginator(),
 ):
     yield paginator
     for page in paginator.pages:
-        page_consumer(page)
+        await page_consumer(page)
     paginator.clear()

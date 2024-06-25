@@ -6,7 +6,7 @@ from ghutils.bot.core import BaseCog
 
 @app_commands.allowed_installs(guilds=True, users=True)
 @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-class GHCog(BaseCog, GroupCog, name="gh"):
+class GitHubCog(BaseCog, GroupCog, group_name="gh"):
     """GitHub-related commands."""
 
     @app_commands.command()
