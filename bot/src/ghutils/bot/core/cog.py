@@ -10,7 +10,7 @@ from .bot import GHUtilsBot
 logger = logging.getLogger(__name__)
 
 
-class BaseCogMeta(CogMeta):
+class GHUtilsCogMeta(CogMeta):
     def __new__(cls, *args: Any, **kwargs: Any) -> CogMeta:
         if "name" not in kwargs:
             name = cast(str, args[0]).removesuffix("Cog")
@@ -20,7 +20,7 @@ class BaseCogMeta(CogMeta):
 
 
 @dataclass
-class BaseCog(Cog, metaclass=BaseCogMeta):
+class GHUtilsCog(Cog, metaclass=GHUtilsCogMeta):
     """Base class for GHUtils cogs.
 
     When subclasses are defined, a `setup` function (`cls.setup`) is added to the module
@@ -55,6 +55,6 @@ class BaseCog(Cog, metaclass=BaseCogMeta):
         return hash(self.__class__)
 
     def __eq__(self, other: object) -> bool:
-        if isinstance(other, BaseCog):
+        if isinstance(other, GHUtilsCog):
             return self.__class__ == other.__class__
         return super().__eq__(other)

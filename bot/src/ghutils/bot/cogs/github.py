@@ -1,12 +1,12 @@
 from discord import Interaction, app_commands
 from discord.ext.commands import GroupCog
 
-from ghutils.bot.core import BaseCog
+from ghutils.bot.core import GHUtilsCog
 
 
 @app_commands.allowed_installs(guilds=True, users=True)
 @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-class GitHubCog(BaseCog, GroupCog, group_name="gh"):
+class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
     """GitHub-related commands."""
 
     @app_commands.command()

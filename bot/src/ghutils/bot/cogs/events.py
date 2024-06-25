@@ -3,13 +3,13 @@ import logging
 from discord import Interaction
 from discord.ext.commands import Cog
 
-from ghutils.bot.core import BaseCog
+from ghutils.bot.core import GHUtilsCog
 from ghutils.bot.utils.commands import get_command, print_command
 
 logger = logging.getLogger(__name__)
 
 
-class EventsCog(BaseCog):
+class EventsCog(GHUtilsCog):
     """Cog for event handlers that don't fit anywhere else."""
 
     @Cog.listener()

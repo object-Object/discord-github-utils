@@ -3,14 +3,14 @@ import logging
 from discord.ext import commands
 
 from ghutils.bot.core.bot import COGS_MODULE, GHUtilsContext
-from ghutils.bot.core.cog import BaseCog
+from ghutils.bot.core.cog import GHUtilsCog
 from ghutils.bot.utils.collections import partition
 from ghutils.bot.utils.commands import paginate
 
 logger = logging.getLogger(__name__)
 
 
-class ExtensionsCog(BaseCog):
+class ExtensionsCog(GHUtilsCog):
     """Owner-only message commands for managing cogs/extensions."""
 
     async def cog_check(  # pyright: ignore[reportIncompatibleMethodOverride]
