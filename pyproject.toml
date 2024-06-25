@@ -38,6 +38,7 @@ path = "common/src/ghutils/common/__version__.py"
 # linting/formatting
 
 [tool.ruff]
+preview = true
 extend-exclude = [
     "**/venv",
     "**/.*",
