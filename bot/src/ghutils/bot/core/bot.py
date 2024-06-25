@@ -12,6 +12,10 @@ from .env import EnvSettings
 
 logger = logging.getLogger(__name__)
 
+COGS_MODULE = cogs.__name__
+
+GHUtilsContext = Context["GHUtilsBot"]
+
 
 @dataclass
 class GHUtilsBot(Bot):
@@ -31,6 +35,3 @@ class GHUtilsBot(Bot):
                 await self.load_extension(cog)
             except NoEntryPointError:
                 logger.warning(f"No entry point for cog: {cog}")
-
-
-GHUtilsContext = Context[GHUtilsBot]

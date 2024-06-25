@@ -3,8 +3,8 @@ from discord.ext import commands
 from ghutils.bot.core import BaseCog, GHUtilsContext
 
 
-class OwnerCommandsCog(BaseCog):
-    """Owner-only message commands."""
+class SyncCog(BaseCog):
+    """Owner-only message commands for syncing slash commands."""
 
     async def cog_check(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,

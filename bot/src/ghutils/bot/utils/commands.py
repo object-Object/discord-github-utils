@@ -1,7 +1,11 @@
-from typing import Any
+from contextlib import contextmanager
+from typing import Any, Callable
 
 from discord import Interaction, InteractionType
 from discord.app_commands import Command
+from discord.ext.commands import Paginator
+
+from .strings import truncate_str
 
 AnyCommand = Command[Any, ..., Any]
 
@@ -28,12 +32,12 @@ def print_command(
     return f"/{command.qualified_name} {args}"
 
 
-def truncate_str(text: str, limit: int | None, message: str = " ... (truncated)"):
-    if limit is None:
-        return text
-
-    limit -= len(message)
-    if len(text) <= limit:
-        return text
-
-    return text[:limit] + message
+@contextmanager
+def paginate(
+    page_consumer: Callable[[str], Any],
+    paginator: Paginator = Paginator(),
+):
+    yield paginator
+    for page in paginator.pages:
+        page_consumer(page)
+    paginator.clear()
