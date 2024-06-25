@@ -26,7 +26,7 @@ members = [
 
 [tool.hatch.version]
 source = "regex"
-path = "common/src/dgu_common/__version__.py"
+path = "common/src/ghutils_common/__version__.py"
 
 [tool.ruff]
 extend-exclude = [
@@ -52,7 +52,7 @@ extend-ignore = [
 [tool.ruff.lint.isort]
 combine-as-imports = true
 known-first-party = [
-    "dgu_*",
+    "ghutils_*",
 ]
 
 [tool.pyright]

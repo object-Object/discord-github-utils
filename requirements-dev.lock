@@ -10,8 +10,8 @@
 
 -e file:bot
 -e file:common
-    # via dgu-bot
-    # via dgu-infrastructure
+    # via ghutils-bot
+    # via ghutils-infrastructure
 -e file:infrastructure
 aiohttp==3.9.5
     # via discord-py
@@ -22,7 +22,7 @@ attrs==23.2.0
 cfgv==3.4.0
     # via pre-commit
 discord-py==2.4.0
-    # via dgu-bot
+    # via ghutils-bot
 distlib==0.3.8
     # via virtualenv
 filelock==3.15.4

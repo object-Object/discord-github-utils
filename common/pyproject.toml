@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 dynamic = ["version"]
-name = "dgu-common"
+name = "ghutils-common"
 requires-python = ">=3.12"
 dependencies = []
 
@@ -14,10 +14,10 @@ dev-dependencies = []
 
 [tool.hatch.version]
 source = "regex"
-path = "src/dgu_common/__version__.py"
+path = "src/ghutils_common/__version__.py"
 
 [tool.hatch.metadata]
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/dgu_common"]
+packages = ["src/ghutils_common"]

@@ -10,8 +10,8 @@
 
 -e file:bot
 -e file:common
-    # via dgu-bot
-    # via dgu-infrastructure
+    # via ghutils-bot
+    # via ghutils-infrastructure
 -e file:infrastructure
 aiohttp==3.9.5
     # via discord-py
@@ -20,7 +20,7 @@ aiosignal==1.3.1
 attrs==23.2.0
     # via aiohttp
 discord-py==2.4.0
-    # via dgu-bot
+    # via ghutils-bot
 frozenlist==1.4.1
     # via aiohttp
     # via aiosignal
