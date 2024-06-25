@@ -40,3 +40,12 @@ class BaseCog(Cog):
     def _create_cog(cls, bot: GHUtilsBot) -> Self:
         """Factory method called by `setup` when adding this cog to the bot."""
         return cls(bot)
+
+    # required to make the help command not fail
+    def __hash__(self) -> int:
+        return hash(self.__class__)
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, BaseCog):
+            return self.__class__ == other.__class__
+        return super().__eq__(other)
