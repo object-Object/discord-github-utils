@@ -9,6 +9,8 @@ readme = "README.md"
 license = { file="LICENSE" }
 requires-python = ">=3.12"
 
+# Rye workspace
+
 [tool.rye]
 managed = true
 virtual = true
@@ -24,9 +26,16 @@ members = [
     "infrastructure",
 ]
 
+[tool.rye.scripts]
+bot = { call="ghutils_bot.app" }
+
+# Hatch version plugin (so `hatch version` works)
+
 [tool.hatch.version]
 source = "regex"
 path = "common/src/ghutils_common/__version__.py"
+
+# linting/formatting
 
 [tool.ruff]
 extend-exclude = [
@@ -54,6 +63,8 @@ combine-as-imports = true
 known-first-party = [
     "ghutils_*",
 ]
+
+# type checking
 
 [tool.pyright]
 pythonVersion = "3.12"

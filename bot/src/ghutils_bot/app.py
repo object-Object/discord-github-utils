@@ -1,19 +1,22 @@
 import asyncio
+import logging
 
-import discord
+from discord import VoiceClient
 from discord.utils import setup_logging
 
-from ghutils_bot.core import GHUtilsBot, GHUtilsEnv
+from ghutils_bot.core import EnvSettings, GHUtilsBot
 
 
 async def main():
     setup_logging()
-    discord.VoiceClient.warn_nacl = False
+    VoiceClient.warn_nacl = False
+    for name in ["ghutils_bot", "ghutils_common"]:
+        logging.getLogger(name).setLevel(logging.DEBUG)
 
-    env = GHUtilsEnv.model_validate({})
+    env = EnvSettings.model_validate({})
     async with GHUtilsBot(env) as bot:
         await bot.load_cogs()
-        # await bot.start(env.token.get_secret_value())
+        await bot.start(env.token.get_secret_value())
 
 
 if __name__ == "__main__":

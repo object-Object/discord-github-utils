@@ -8,14 +8,14 @@ from discord.ext.commands import Bot, NoEntryPointError
 from ghutils_bot import cogs
 from ghutils_bot.utils.imports import iter_modules
 
-from .env import GHUtilsEnv
+from .env import EnvSettings
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class GHUtilsBot(Bot):
-    env: GHUtilsEnv
+    env: EnvSettings
 
     def __post_init__(self):
         super().__init__(

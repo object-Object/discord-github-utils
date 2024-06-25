@@ -1,7 +1,9 @@
 __all__ = [
+    "BaseCog",
+    "EnvSettings",
     "GHUtilsBot",
-    "GHUtilsEnv",
 ]
 
 from .bot import GHUtilsBot
-from .env import GHUtilsEnv
+from .cog import BaseCog
+from .env import EnvSettings

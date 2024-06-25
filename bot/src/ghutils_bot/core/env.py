@@ -2,7 +2,7 @@ from pydantic import SecretStr
 from pydantic_settings import BaseSettings
 
 
-class GHUtilsEnv(BaseSettings):
+class EnvSettings(BaseSettings):
     model_config = {
         "env_file": ".env",
     }
