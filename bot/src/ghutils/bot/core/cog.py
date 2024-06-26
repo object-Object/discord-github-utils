@@ -50,6 +50,10 @@ class GHUtilsCog(Cog, metaclass=GHUtilsCogMeta):
         """Factory method called by `setup` when adding this cog to the bot."""
         return cls(bot)
 
+    @property
+    def env(self):
+        return self.bot.env
+
     # required to make the help command not fail
     def __hash__(self) -> int:
         return hash(self.__class__)
