@@ -12,6 +12,7 @@ dependencies = [
     "pydantic>=2.7.4",
     "pydantic-settings>=2.3.4",
     "pygithub>=2.3.0",
+    "fastapi>=0.111.0",
 ]
 
 [tool.rye]

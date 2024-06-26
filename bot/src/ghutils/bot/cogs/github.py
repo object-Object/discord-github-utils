@@ -50,6 +50,6 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
         )
 
         await interaction.response.send_message(
-            view=View().add_item(Button(label="Sign in with GitHub", url=auth_url)),
+            view=View().add_item(Button(label="Login with GitHub", url=auth_url)),
             ephemeral=True,
         )

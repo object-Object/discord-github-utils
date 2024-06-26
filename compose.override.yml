@@ -4,6 +4,12 @@ services:
     build: .
     environment:
       ENVIRONMENT: dev
+
+  api:
+    build: .
+    environment:
+      ENVIRONMENT: dev
+
 secrets:
   env:
     file: .env

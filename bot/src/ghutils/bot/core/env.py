@@ -12,6 +12,7 @@ class EnvSettings(BaseSettings):
     }
 
     token: SecretStr
+    postgres_url: str
 
     commit: str = "Unknown"
     commit_date: str = "Unknown"
