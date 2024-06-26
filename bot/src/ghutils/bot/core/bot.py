@@ -8,7 +8,7 @@ from discord.ext.commands import Bot, Context, NoEntryPointError
 from ghutils.bot import cogs
 from ghutils.bot.utils.imports import iter_modules
 
-from .env import EnvSettings
+from .env import GHUtilsEnv
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ GHUtilsContext = Context["GHUtilsBot"]
 
 @dataclass
 class GHUtilsBot(Bot):
-    env: EnvSettings
+    env: GHUtilsEnv
 
     def __post_init__(self):
         super().__init__(

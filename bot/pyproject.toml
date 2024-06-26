@@ -13,6 +13,8 @@ dependencies = [
     "pydantic-settings>=2.3.4",
     "pygithub>=2.3.0",
     "fastapi>=0.111.0",
+    "sqlmodel>=0.0.19",
+    "psycopg2-binary>=2.9.9",
 ]
 
 [tool.rye]

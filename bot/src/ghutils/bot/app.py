@@ -1,12 +1,14 @@
 import asyncio
 
-from ghutils.bot.core import EnvSettings, GHUtilsBot
+from ghutils.bot.core import GHUtilsBot, GHUtilsEnv
+from ghutils.bot.db.models import create_db_and_tables
 from ghutils.bot.utils.logging import setup_logging
 
 
 async def main():
     setup_logging()
-    env = EnvSettings.model_validate({})
+    create_db_and_tables()
+    env = GHUtilsEnv.get()
     async with GHUtilsBot(env) as bot:
         await bot.load_cogs()
         await bot.start(env.token.get_secret_value())

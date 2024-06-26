@@ -8,7 +8,7 @@ services:
         target: /app/.env
     environment:
       MODULE: ghutils.bot.app
-      POSTGRES_URL: postgres://postgres:postgres@postgres/postgres # postgres
+      DB_URL: postgresql://postgres:postgres@postgres/postgres # postgres
       HEALTH_CHECK_DISPLAY_NAME: Docker
       HEALTH_CHECK_PORT: 40404
       HEALTH_CHECK_STARTUP_DELAY: 0
@@ -29,7 +29,7 @@ services:
     environment:
       MODULE: ghutils.bot.api.app
       PORT: 7100
-      POSTGRES_URL: postgres://postgres:postgres@postgres/postgres
+      DB_URL: postgresql://postgres:postgres@postgres/postgres
     depends_on:
       - postgres
 

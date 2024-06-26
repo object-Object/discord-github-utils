@@ -28,6 +28,7 @@ members = [
 
 [tool.rye.scripts]
 bot = { call="ghutils.bot.app" }
+api = { call="ghutils.bot.api.app" }
 
 # Hatch version plugin (so `hatch version` works)
 
