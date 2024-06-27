@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 import functools
+import logging
+from typing import Literal
 
-from pydantic import BaseModel, SecretStr
+from pydantic import BaseModel, Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings
+
+logger = logging.getLogger(__name__)
 
 
 class GHUtilsEnv(BaseSettings):
@@ -14,19 +18,31 @@ class GHUtilsEnv(BaseSettings):
     }
 
     token: SecretStr
-    db_url: str
+    db_url: str = Field("")
+    environment: Literal["dev", "prod"]
 
     commit: str = "Unknown"
     commit_date: str = "Unknown"
 
     github: GitHub
 
-    class GitHub(BaseModel):
-        client_id: str
-        client_secret: SecretStr
-        redirect_uri: str
-
     @staticmethod
     @functools.cache
     def get():
         return GHUtilsEnv.model_validate({})
+
+    @model_validator(mode="after")
+    def _post_root(self):
+        if not self.db_url:
+            match self.environment:
+                case "dev":
+                    logger.warning("DB_URL not set, using local SQLite DB")
+                    self.db_url = "sqlite:///db.sqlite"
+                case "prod":
+                    raise ValueError("DB_URL is required but not set")
+        return self
+
+    class GitHub(BaseModel):
+        client_id: str
+        client_secret: SecretStr
+        redirect_uri: str

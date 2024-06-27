@@ -18,5 +18,14 @@
     "python.analysis.packageIndexDepths": [
         { "name": "pydantic", "depth": 2 },
         { "name": "discord", "depth": 3 },
+    ],
+    "sqltools.useNodeRuntime": true,
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "name": "ghutils",
+            "database": "${workspaceFolder:discord-github-utils}/db.sqlite"
+        }
     ]
 }

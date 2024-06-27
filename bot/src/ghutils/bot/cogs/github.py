@@ -6,6 +6,7 @@ from discord.ui import Button, View
 from github import Github
 
 from ghutils.bot.core import GHUtilsCog
+from ghutils.bot.db.models import UserLogin
 
 
 @app_commands.allowed_installs(guilds=True, users=True)
@@ -35,18 +36,27 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
     async def login(self, interaction: Interaction):
         """Authorize GitHub Utils to make requests on behalf of your GitHub account."""
 
-        state_id = str(uuid.uuid4())
+        user_id = interaction.user.id
+        login_id = str(uuid.uuid4())
+
+        with self.bot.db_session() as session:
+            match session.get(UserLogin, user_id):
+                case UserLogin() as login:
+                    login.login_id = login_id
+                case None:
+                    login = UserLogin(user_id=user_id, login_id=login_id)
+
+            session.add(login)
+            session.commit()
 
         gh = Github()
-
         oauth = gh.get_oauth_application(
             client_id=self.env.github.client_id,
             client_secret=self.env.github.client_secret.get_secret_value(),
         )
-
         auth_url = oauth.get_login_url(
             redirect_uri=self.env.github.redirect_uri,
-            state=state_id,
+            state=login.model_dump_json(),
         )
 
         await interaction.response.send_message(

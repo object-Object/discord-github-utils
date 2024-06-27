@@ -1,4 +1,6 @@
 .ruff_cache/
+db.sqlite
+*.session.sql
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
