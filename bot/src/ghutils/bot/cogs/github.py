@@ -3,7 +3,6 @@ import uuid
 from discord import Interaction, app_commands
 from discord.ext.commands import GroupCog
 from discord.ui import Button, View
-from github import Github
 
 from ghutils.bot.core import GHUtilsCog
 from ghutils.bot.db.models import UserLogin
@@ -49,11 +48,7 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
             session.add(login)
             session.commit()
 
-        gh = Github()
-        oauth = gh.get_oauth_application(
-            client_id=self.env.github.client_id,
-            client_secret=self.env.github.client_secret.get_secret_value(),
-        )
+        oauth = self.env.github.get_oauth_application()
         auth_url = oauth.get_login_url(
             redirect_uri=self.env.github.redirect_uri,
             state=login.model_dump_json(),

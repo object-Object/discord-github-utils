@@ -2,7 +2,7 @@ from sqlalchemy import BigInteger, Engine
 from sqlmodel import Field, SQLModel  # pyright: ignore[reportUnknownVariableType]
 
 
-class UserGitHubToken(SQLModel, table=True):
+class UserGitHubTokens(SQLModel, table=True):
     user_id: int = Field(primary_key=True, sa_type=BigInteger)
     access_token: str = Field(repr=False)
     refresh_token: str = Field(repr=False)

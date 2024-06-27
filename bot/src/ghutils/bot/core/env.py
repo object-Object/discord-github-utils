@@ -4,6 +4,7 @@ import functools
 import logging
 from typing import Literal
 
+from github import Github
 from pydantic import BaseModel, Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings
 
@@ -46,3 +47,9 @@ class GHUtilsEnv(BaseSettings):
         client_id: str
         client_secret: SecretStr
         redirect_uri: str
+
+        def get_oauth_application(self):
+            return Github().get_oauth_application(
+                client_id=self.client_id,
+                client_secret=self.client_secret.get_secret_value(),
+            )
