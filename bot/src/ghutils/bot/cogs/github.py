@@ -62,7 +62,7 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
 
     @app_commands.command()
     async def logout(self, interaction: Interaction):
-        """"""
+        """Remove your GitHub account from GitHub Utils."""
 
         with self.bot.db_session() as session:
             # TODO: this should delete the authorization too, but idk how
