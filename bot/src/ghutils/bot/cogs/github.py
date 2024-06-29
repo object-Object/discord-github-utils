@@ -60,6 +60,27 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
             ephemeral=True,
         )
 
+    @app_commands.command()
+    async def logout(self, interaction: Interaction):
+        """"""
+
+        with self.bot.db_session() as session:
+            # TODO: this should delete the authorization too, but idk how
+            # https://docs.github.com/en/rest/apps/oauth-applications?apiVersion=2022-11-28#delete-an-app-authorization
+            if user_tokens := session.get(UserGitHubTokens, interaction.user.id):
+                session.delete(user_tokens)
+                session.commit()
+
+                await interaction.response.send_message(
+                    "✅ Successfully logged out.",
+                    ephemeral=True,
+                )
+            else:
+                await interaction.response.send_message(
+                    "❌ Already logged out.",
+                    ephemeral=True,
+                )
+
     def _get_github_app(self, user_id: int) -> tuple[Github, LoginResult]:
         oauth = self.env.github.get_oauth_application()
 
