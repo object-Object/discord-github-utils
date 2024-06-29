@@ -4,6 +4,11 @@ services:
     build: .
     environment:
       ENVIRONMENT: dev
+    develop:
+      watch:
+        - action: sync
+          path: bot/src/ghutils/bot/cogs
+          target: /app/bot/src/ghutils/bot/cogs
 
   api:
     build: .
