@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import functools
 import logging
+from pathlib import Path
 from typing import Literal
 
 from github import Github
-from pydantic import BaseModel, Field, SecretStr, model_validator
+from github.Auth import AppAuth
+from pydantic import BaseModel, Field, PrivateAttr, SecretStr, model_validator
 from pydantic_settings import BaseSettings
 
 logger = logging.getLogger(__name__)
@@ -44,12 +46,42 @@ class GHUtilsEnv(BaseSettings):
         return self
 
     class GitHub(BaseModel):
+        app_id: int
         client_id: str
         client_secret: SecretStr
+        private_key_path: Path
         redirect_uri: str
+        default_installation_id: int
+
+        _private_key: SecretStr = PrivateAttr()
+
+        @property
+        def private_key(self):
+            return self._private_key
 
         def get_oauth_application(self):
             return Github().get_oauth_application(
                 client_id=self.client_id,
                 client_secret=self.client_secret.get_secret_value(),
             )
+
+        def get_login_url(self, state: str):
+            return self.get_oauth_application().get_login_url(
+                redirect_uri=self.redirect_uri,
+                state=state,
+            )
+
+        # if a user isn't logged in, authenticate using a specific installation
+        # to get a higher ratelimit than unauthenticated requests
+        def get_default_installation_auth(self):
+            return AppAuth(
+                app_id=self.app_id,
+                private_key=self.private_key.get_secret_value(),
+            ).get_installation_auth(
+                installation_id=self.default_installation_id,
+            )
+
+        @model_validator(mode="after")
+        def _post_root(self):
+            self._private_key = SecretStr(self.private_key_path.read_text("utf-8"))
+            return self

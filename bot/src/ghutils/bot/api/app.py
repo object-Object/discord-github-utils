@@ -68,11 +68,11 @@ def get_login(
         )
 
     # insert the tokens into the database
-    user_tokens = UserGitHubTokens(
-        user_id=login.user_id,
-        access_token=token.token,
-        refresh_token=token.refresh_token,
-    )
+    match session.get(UserGitHubTokens, login.user_id):
+        case UserGitHubTokens() as user_tokens:
+            user_tokens.refresh(token)
+        case None:
+            user_tokens = UserGitHubTokens.from_token(login.user_id, token)
     session.add(user_tokens)
 
     # commit the delete and insert
