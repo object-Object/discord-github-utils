@@ -5,6 +5,8 @@ services:
     secrets:
       - source: env
         target: /app/.env
+      - source: github_private_key
+        target: /app/secrets/github__private_key
     environment:
       MODULE: ghutils.bot.app
       DB_URL: postgresql://postgres:postgres@postgres/postgres # postgres
@@ -22,11 +24,13 @@ services:
     secrets:
       - source: env
         target: /app/.env
+      - source: github_private_key
+        target: /app/secrets/github__private_key
     ports:
       - 7100:7100
     environment:
       MODULE: ghutils.bot.api.app
-      PORT: 7100
+      API_PORT: 7100
       DB_URL: postgresql://postgres:postgres@postgres/postgres
     depends_on:
       - postgres

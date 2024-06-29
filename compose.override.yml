@@ -12,4 +12,6 @@ services:
 
 secrets:
   env:
-    file: .env
+    file: .env.docker
+  github_private_key:
+    file: secrets/github__private_key

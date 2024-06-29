@@ -18,3 +18,5 @@ services:
 secrets:
   env:
     file: .env
+  github_private_key:
+    file: github__private_key
