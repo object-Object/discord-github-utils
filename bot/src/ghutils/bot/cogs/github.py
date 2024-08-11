@@ -1,15 +1,47 @@
 from __future__ import annotations
 
 import uuid
-from enum import Enum, auto
+from dataclasses import dataclass
 
 from discord import Interaction, app_commands
+from discord.app_commands import Group, Transform, Transformer
 from discord.ext.commands import GroupCog
 from discord.ui import Button, View
-from github import Github
 
 from ghutils.bot.core import GHUtilsCog
+from ghutils.bot.core.bot import GHUtilsBot
+from ghutils.bot.core.types import LoginResult
 from ghutils.bot.db.models import UserGitHubTokens, UserLogin
+
+
+@dataclass
+class Repository:
+    owner: str
+    repo: str
+
+    def __str__(self) -> str:
+        return f"{self.owner}/{self.repo}"
+
+
+class RepositoryTransformer(Transformer):
+    async def transform(self, interaction: Interaction, value: str):
+        if "/" in value:
+            owner, repo = value.split("/")
+            return Repository(owner=owner, repo=repo)
+
+        bot = interaction.client
+        assert isinstance(bot, GHUtilsBot)
+
+        github, result = bot.get_github_app(interaction)
+        if result != LoginResult.LOGGED_IN:
+            raise ValueError(
+                f"Value does not contain '/' and user is not logged in: {value}"
+            )
+
+        return Repository(owner=github.get_user().login, repo=value)
+
+
+RepositoryParam = Transform[Repository, RepositoryTransformer]
 
 
 @app_commands.allowed_installs(guilds=True, users=True)
@@ -17,11 +49,13 @@ from ghutils.bot.db.models import UserGitHubTokens, UserLogin
 class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
     """GitHub-related commands."""
 
+    # /gh
+
     @app_commands.command()
     async def issue(self, interaction: Interaction):
         """Get a link to a GitHub issue."""
 
-        github, _ = self._get_github_app(interaction.user.id)
+        github, _ = self.bot.get_github_app(interaction)
         await interaction.response.send_message(github.get_user().login)
 
     @app_commands.command()
@@ -81,35 +115,23 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
                     ephemeral=True,
                 )
 
-    def _get_github_app(self, user_id: int) -> tuple[Github, LoginResult]:
-        oauth = self.env.github.get_oauth_application()
+    # /gh list
 
-        with self.bot.db_session() as session:
-            user_tokens = session.get(UserGitHubTokens, user_id)
+    gh_list = Group(
+        name="list",
+        description="Commands to list values from GitHub.",
+    )
 
-            if user_tokens is None:
-                return self._get_default_installation_app(), LoginResult.LOGGED_OUT
+    @gh_list.command()
+    async def issues(
+        self,
+        interaction: Interaction,
+        repo: RepositoryParam,
+    ):
+        github, _ = self.bot.get_github_app(interaction)
 
-            if user_tokens.is_refresh_expired():
-                return self._get_default_installation_app(), LoginResult.EXPIRED
+        issues = github.get_repo(str(repo)).get_issues()
 
-            # authenticate on behalf of the user
-            token = user_tokens.get_token(oauth)
-            auth = oauth.get_app_user_auth(token)
-
-            # update stored credentials if the current ones expired
-            if auth.token != user_tokens.token:
-                user_tokens.refresh(auth)
-                session.add(user_tokens)
-                session.commit()
-
-            return Github(auth=auth), LoginResult.LOGGED_IN
-
-    def _get_default_installation_app(self):
-        return Github(auth=self.env.github.get_default_installation_auth())
-
-
-class LoginResult(Enum):
-    LOGGED_IN = auto()
-    LOGGED_OUT = auto()
-    EXPIRED = auto()
+        await interaction.response.send_message(
+            "\n".join(issue.title for issue in issues.get_page(0))
+        )
