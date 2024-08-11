@@ -1,10 +1,11 @@
 import logging
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 
 from discord import Game, Intents, Interaction
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, NoEntryPointError
-from github import Github
+from githubkit import GitHub
 from sqlmodel import Session, create_engine
 
 from ghutils.bot import cogs
@@ -50,35 +51,40 @@ class GHUtilsBot(Bot):
             expire_on_commit=expire_on_commit,
         )
 
-    def get_github_app(self, user_id: int | Interaction) -> tuple[Github, LoginResult]:
+    @asynccontextmanager
+    async def get_github_app(self, user_id: int | Interaction):
         match user_id:
             case int():
                 pass
             case Interaction(user=user):
                 user_id = user.id
 
-        oauth = self.env.github.get_oauth_application()
-
         with self.db_session() as session:
             user_tokens = session.get(UserGitHubTokens, user_id)
 
-            if user_tokens is None:
-                return self._get_default_installation_app(), LoginResult.LOGGED_OUT
+        if user_tokens is None:
+            async with self._get_default_installation_app() as github:
+                yield github, LoginResult.LOGGED_OUT
+            return
 
-            if user_tokens.is_refresh_expired():
-                return self._get_default_installation_app(), LoginResult.EXPIRED
+        if user_tokens.is_refresh_expired():
+            async with self._get_default_installation_app() as github:
+                yield github, LoginResult.EXPIRED
+            return
 
-            # authenticate on behalf of the user
-            token = user_tokens.get_token(oauth)
-            auth = oauth.get_app_user_auth(token)
+        # authenticate on behalf of the user
+        auth = self.env.gh.get_user_auth(user_tokens)
+        async with GitHub(auth) as github:
+            yield github, LoginResult.LOGGED_IN
 
-            # update stored credentials if the current ones expired
-            if auth.token != user_tokens.token:
+        # update stored credentials if the current ones were expired
+        # NOTE: we need to do this after yielding because there doesn't seem to be a
+        # way to force it to refresh if necessary; that happens in the request flow
+        if auth.token != user_tokens.token:
+            with self.db_session() as session:
                 user_tokens.refresh(auth)
                 session.add(user_tokens)
                 session.commit()
 
-            return Github(auth=auth), LoginResult.LOGGED_IN
-
     def _get_default_installation_app(self):
-        return Github(auth=self.env.github.get_default_installation_auth())
+        return GitHub(self.env.gh.get_default_installation_auth())

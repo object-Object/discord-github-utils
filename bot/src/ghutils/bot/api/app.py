@@ -5,6 +5,7 @@ from typing import Annotated
 import uvicorn
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.responses import HTMLResponse
+from githubkit import GitHub
 from pydantic import ValidationError
 from sqlalchemy import Engine
 from sqlmodel import Session, create_engine
@@ -37,7 +38,7 @@ app = FastAPI(
 
 
 @app.get("/login")
-def get_login(
+async def get_login(
     code: str,
     state: str,
     session: Annotated[Session, Depends(get_session)],
@@ -59,19 +60,18 @@ def get_login(
             raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid login state")
 
     # get the access/refresh tokens from GitHub
-    oauth = env.github.get_oauth_application()
-    token = oauth.get_access_token(code)
-    if token.refresh_token is None:
-        raise HTTPException(
-            status.HTTP_500_INTERNAL_SERVER_ERROR, "Refresh token not received"
-        )
+    github = GitHub(env.gh.get_oauth_app_auth())
+    auth = await github.auth.as_web_user(
+        code=code,
+        redirect_uri=env.gh.redirect_uri,
+    ).async_exchange_token(github)  # pyright: ignore[reportUnknownMemberType]
 
     # insert the tokens into the database
     match session.get(UserGitHubTokens, login.user_id):
         case UserGitHubTokens() as user_tokens:
-            user_tokens.refresh(token)
+            user_tokens.refresh(auth)
         case None:
-            user_tokens = UserGitHubTokens.from_token(login.user_id, token)
+            user_tokens = UserGitHubTokens.from_auth(login.user_id, auth)
     session.add(user_tokens)
 
     # commit the delete and insert

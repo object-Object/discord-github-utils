@@ -3,10 +3,12 @@ from __future__ import annotations
 import logging
 from typing import ClassVar, Literal, Self
 
-from github import Github
-from github.Auth import AppAuth
+from githubkit import AppInstallationAuthStrategy, OAuthAppAuthStrategy
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings as PydanticBaseSettings, SettingsConfigDict
+from yarl import URL
+
+from ghutils.bot.db.models import UserGitHubTokens
 
 logger = logging.getLogger(__name__)
 
@@ -39,26 +41,35 @@ class GitHubSettings(BaseSettings, env_prefix="github__"):
     redirect_uri: str
     default_installation_id: int
 
-    def get_oauth_application(self):
-        return Github().get_oauth_application(
-            client_id=self.client_id,
-            client_secret=self.client_secret.get_secret_value(),
-        )
-
     def get_login_url(self, state: str):
-        return self.get_oauth_application().get_login_url(
+        """https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-user-access-token-for-a-github-app#using-the-web-application-flow-to-generate-a-user-access-token"""
+        return URL("https://github.com/login/oauth/authorize").with_query(
+            client_id=self.client_id,
             redirect_uri=self.redirect_uri,
             state=state,
+        )
+
+    def get_oauth_app_auth(self):
+        return OAuthAppAuthStrategy(
+            client_id=self.client_id,
+            client_secret=self.client_secret.get_secret_value(),
         )
 
     # if a user isn't logged in, authenticate using a specific installation
     # to get a higher ratelimit than unauthenticated requests
     def get_default_installation_auth(self):
-        return AppAuth(
+        return AppInstallationAuthStrategy(
             app_id=self.app_id,
             private_key=self.private_key.get_secret_value(),
-        ).get_installation_auth(
             installation_id=self.default_installation_id,
+            client_id=self.client_id,
+            client_secret=self.client_secret.get_secret_value(),
+        )
+
+    def get_user_auth(self, user_tokens: UserGitHubTokens):
+        return user_tokens.to_auth(
+            client_id=self.client_id,
+            client_secret=self.client_secret.get_secret_value(),
         )
 
 
@@ -72,3 +83,8 @@ class GHUtilsEnv(BaseSettings):
     commit_date: str = "Unknown"
 
     github: GitHubSettings = Field(default_factory=GitHubSettings.get)
+    """GitHub-related environment variables."""
+
+    @property
+    def gh(self):
+        return self.github

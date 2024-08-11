@@ -28,24 +28,18 @@ attrs==23.2.0
 certifi==2024.6.2
     # via httpcore
     # via httpx
-    # via requests
-cffi==1.16.0
+cffi==1.17.0
     # via cryptography
-    # via pynacl
 cfgv==3.4.0
     # via pre-commit
-charset-normalizer==3.3.2
-    # via requests
 click==8.1.7
     # via typer
     # via uvicorn
 colorama==0.4.6
     # via click
     # via uvicorn
-cryptography==42.0.8
+cryptography==43.0.0
     # via pyjwt
-deprecated==1.2.14
-    # via pygithub
 discord-py==2.4.0
     # via ghutils-bot
 distlib==0.3.8
@@ -63,24 +57,29 @@ filelock==3.15.4
 frozenlist==1.4.1
     # via aiohttp
     # via aiosignal
+githubkit==0.11.8
+    # via ghutils-bot
 greenlet==3.0.3
     # via sqlalchemy
 h11==0.14.0
     # via httpcore
     # via uvicorn
+hishel==0.0.30
+    # via githubkit
 httpcore==1.0.5
     # via httpx
 httptools==0.6.1
     # via uvicorn
 httpx==0.27.0
     # via fastapi
+    # via githubkit
+    # via hishel
 identify==2.5.36
     # via pre-commit
 idna==3.7
     # via anyio
     # via email-validator
     # via httpx
-    # via requests
     # via yarl
 jinja2==3.1.4
     # via fastapi
@@ -107,20 +106,17 @@ pycparser==2.22
 pydantic==2.7.4
     # via fastapi
     # via ghutils-bot
+    # via githubkit
     # via pydantic-settings
     # via sqlmodel
 pydantic-core==2.18.4
     # via pydantic
 pydantic-settings==2.3.4
     # via ghutils-bot
-pygithub==2.3.0
-    # via ghutils-bot
 pygments==2.18.0
     # via rich
-pyjwt==2.8.0
-    # via pygithub
-pynacl==1.5.0
-    # via pygithub
+pyjwt==2.9.0
+    # via githubkit
 python-dotenv==1.0.1
     # via pydantic-settings
     # via uvicorn
@@ -129,8 +125,6 @@ python-multipart==0.0.9
 pyyaml==6.0.1
     # via pre-commit
     # via uvicorn
-requests==2.32.3
-    # via pygithub
 rich==13.7.1
     # via typer
 ruff==0.4.10
@@ -149,16 +143,14 @@ typer==0.12.3
     # via fastapi-cli
 typing-extensions==4.12.2
     # via fastapi
+    # via githubkit
+    # via hishel
     # via pydantic
     # via pydantic-core
-    # via pygithub
     # via sqlalchemy
     # via typer
 ujson==5.10.0
     # via fastapi
-urllib3==2.2.2
-    # via pygithub
-    # via requests
 uvicorn==0.30.1
     # via fastapi
 virtualenv==20.26.3
@@ -167,7 +159,5 @@ watchfiles==0.22.0
     # via uvicorn
 websockets==12.0
     # via uvicorn
-wrapt==1.16.0
-    # via deprecated
 yarl==1.9.4
     # via aiohttp

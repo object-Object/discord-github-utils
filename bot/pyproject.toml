@@ -11,10 +11,10 @@ dependencies = [
     "discord-py>=2.4.0",
     "pydantic>=2.7.4",
     "pydantic-settings>=2.3.4",
-    "pygithub>=2.3.0",
     "fastapi>=0.111.0",
     "sqlmodel>=0.0.19",
     "psycopg2-binary>=2.9.9",
+    "githubkit[auth-app]>=0.11.8",
 ]
 
 [tool.rye]

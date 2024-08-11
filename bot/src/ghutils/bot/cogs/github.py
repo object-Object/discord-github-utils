@@ -2,16 +2,19 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
+from typing import Any
 
 from discord import Interaction, app_commands
 from discord.app_commands import Group, Transform, Transformer
 from discord.ext.commands import GroupCog
 from discord.ui import Button, View
+from githubkit import GitHub
 
 from ghutils.bot.core import GHUtilsCog
 from ghutils.bot.core.bot import GHUtilsBot
 from ghutils.bot.core.types import LoginResult
 from ghutils.bot.db.models import UserGitHubTokens, UserLogin
+from ghutils.bot.utils.github import gh_request
 
 
 @dataclass
@@ -32,13 +35,14 @@ class RepositoryTransformer(Transformer):
         bot = interaction.client
         assert isinstance(bot, GHUtilsBot)
 
-        github, result = bot.get_github_app(interaction)
-        if result != LoginResult.LOGGED_IN:
-            raise ValueError(
-                f"Value does not contain '/' and user is not logged in: {value}"
-            )
+        async with bot.get_github_app(interaction) as (github, result):
+            if result != LoginResult.LOGGED_IN:
+                raise ValueError(
+                    f"Value does not contain '/' and user is not logged in: {value}"
+                )
 
-        return Repository(owner=github.get_user().login, repo=value)
+            user = await gh_request(github.rest.users.async_get_authenticated())
+            return Repository(owner=user.login, repo=value)
 
 
 RepositoryParam = Transform[Repository, RepositoryTransformer]
@@ -55,8 +59,9 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
     async def issue(self, interaction: Interaction):
         """Get a link to a GitHub issue."""
 
-        github, _ = self.bot.get_github_app(interaction)
-        await interaction.response.send_message(github.get_user().login)
+        async with self.bot.get_github_app(interaction) as (github, _):
+            user = await gh_request(github.rest.users.async_get_authenticated())
+            await interaction.response.send_message(user.login)
 
     @app_commands.command()
     async def pr(self, interaction: Interaction):
@@ -87,10 +92,10 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
             session.add(login)
             session.commit()
 
-        auth_url = self.env.github.get_login_url(state=login.model_dump_json())
+        auth_url = self.env.gh.get_login_url(state=login.model_dump_json())
 
         await interaction.response.send_message(
-            view=View().add_item(Button(label="Login with GitHub", url=auth_url)),
+            view=View().add_item(Button(label="Login with GitHub", url=str(auth_url))),
             ephemeral=True,
         )
 
@@ -128,10 +133,30 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
         interaction: Interaction,
         repo: RepositoryParam,
     ):
-        github, _ = self.bot.get_github_app(interaction)
+        async with self.bot.get_github_app(interaction) as (github, _):
+            issues = [issue async for issue in _list_issues(github, repo, limit=10)]
 
-        issues = github.get_repo(str(repo)).get_issues()
+            await interaction.response.send_message(
+                "\n".join(f"- {issue.title}" for issue in issues)
+            )
 
-        await interaction.response.send_message(
-            "\n".join(issue.title for issue in issues.get_page(0))
-        )
+
+async def _list_issues(
+    github: GitHub[Any],
+    repo: Repository,
+    *,
+    limit: int | None = None,
+):
+    n = 0
+    async for issue in github.paginate(
+        github.rest.issues.async_list_for_repo,
+        owner=repo.owner,
+        repo=repo.repo,
+        state="open",
+    ):
+        if issue.pull_request:
+            continue
+        yield issue
+        n += 1
+        if limit and n >= limit:
+            break
