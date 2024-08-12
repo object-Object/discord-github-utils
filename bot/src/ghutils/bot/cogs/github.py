@@ -93,7 +93,7 @@ async def issue_autocomplete(
         return [
             Choice(
                 name=truncate_str(
-                    f"#{result.number}: {result.title}",
+                    f"{repo}#{result.number}: {result.title}",
                     limit=100,
                     message="...",
                 ),
