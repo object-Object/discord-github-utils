@@ -13,7 +13,7 @@ from ghutils.bot.db.models import UserGitHubTokens
 from ghutils.bot.utils.imports import iter_modules
 
 from .env import GHUtilsEnv
-from .types import LoginResult
+from .types import LoginState
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +35,12 @@ class GHUtilsBot(Bot):
             activity=Game(f"version {self.env.commit} ({self.env.commit_date})"),
         )
         self.engine = create_engine(self.env.db_url)
+
+    @classmethod
+    def of(cls, interaction: Interaction):
+        bot = interaction.client
+        assert isinstance(bot, cls)
+        return bot
 
     async def load_cogs(self):
         for cog in iter_modules(cogs, skip_internal=True):
@@ -64,18 +70,18 @@ class GHUtilsBot(Bot):
 
         if user_tokens is None:
             async with self._get_default_installation_app() as github:
-                yield github, LoginResult.LOGGED_OUT
+                yield github, LoginState.LOGGED_OUT
             return
 
         if user_tokens.is_refresh_expired():
             async with self._get_default_installation_app() as github:
-                yield github, LoginResult.EXPIRED
+                yield github, LoginState.EXPIRED
             return
 
         # authenticate on behalf of the user
         auth = self.env.gh.get_user_auth(user_tokens)
         async with GitHub(auth) as github:
-            yield github, LoginResult.LOGGED_IN
+            yield github, LoginState.LOGGED_IN
 
         # update stored credentials if the current ones were expired
         # NOTE: we need to do this after yielding because there doesn't seem to be a
