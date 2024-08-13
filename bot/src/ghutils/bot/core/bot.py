@@ -42,6 +42,10 @@ class GHUtilsBot(Bot):
         assert isinstance(bot, cls)
         return bot
 
+    @classmethod
+    def get_github_app_of(cls, interaction: Interaction):
+        return cls.of(interaction).get_github_app(interaction)
+
     async def load_cogs(self):
         for cog in iter_modules(cogs, skip_internal=True):
             try:

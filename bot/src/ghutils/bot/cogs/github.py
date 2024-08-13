@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import logging
+import re
 import uuid
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Iterable, Literal
 
 from discord import Interaction, app_commands
 from discord.app_commands import Choice, Group, Transform, Transformer
@@ -11,6 +13,7 @@ from discord.ext.commands import GroupCog
 from discord.ui import Button, View
 from githubkit import GitHub
 from githubkit.exception import GitHubException, RequestFailed
+from githubkit.rest import Issue, PullRequest
 
 from ghutils.bot.core import GHUtilsCog
 from ghutils.bot.core.bot import GHUtilsBot
@@ -42,8 +45,7 @@ class RepositoryTransformer(Transformer):
         if result := Repository.parse(value):
             return result
 
-        bot = GHUtilsBot.of(interaction)
-        async with bot.get_github_app(interaction) as (github, state):
+        async with GHUtilsBot.get_github_app_of(interaction) as (github, state):
             if state != LoginState.LOGGED_IN:
                 raise ValueError(
                     f"Value does not contain '/' and user is not logged in: {value}"
@@ -56,51 +58,163 @@ class RepositoryTransformer(Transformer):
 RepositoryParam = Transform[Repository, RepositoryTransformer]
 
 
-async def issue_autocomplete(
-    interaction: Interaction,
-    current: str,
-) -> list[Choice[str]]:
-    if "#" not in current:
-        return []
+class ReferenceTransformer[T](Transformer, ABC):
+    @property
+    @abstractmethod
+    def separator(self) -> str: ...
 
-    raw_repo, search = current.split("#", maxsplit=1)
-    if not (repo := Repository.parse(raw_repo)):
-        return []
+    @property
+    @abstractmethod
+    def reference_pattern(self) -> str: ...
 
-    bot = GHUtilsBot.of(interaction)
-    async with bot.get_github_app(interaction) as (github, state):
-        match state:
-            case LoginState.LOGGED_IN:
-                error = None
-            case LoginState.LOGGED_OUT:
-                error = "⚠️ Log in with `/gh login` to enable autocomplete."
-            case LoginState.EXPIRED:
-                error = "⚠️ Session expired. Log back in with `/gh login` to reenable autocomplete."
-        if error:
-            return [Choice(name=error, value=current)]
+    @abstractmethod
+    async def resolve_reference(
+        self,
+        github: GitHub[Any],
+        repo: Repository,
+        reference: str,
+    ) -> T: ...
 
+    @abstractmethod
+    async def search_for_autocomplete(
+        self,
+        github: GitHub[Any],
+        repo: Repository,
+        search: str,
+    ) -> Iterable[tuple[str, str]]:
+        """Returns a list of `(reference, description)`.
+
+        For example, issues would return a list of `(issue_number, issue_title)`.
+        """
+
+    async def transform(
+        self,
+        interaction: Interaction,
+        value: str,
+    ) -> T:
+        repo, raw_reference = self.split_raw_value(interaction, value)
+
+        match = re.match(rf"^({self.reference_pattern})", raw_reference)
+        if not match:
+            raise ValueError(f"Invalid reference: {raw_reference}")
+
+        async with GHUtilsBot.get_github_app_of(interaction) as (github, _):
+            return await self.resolve_reference(github, repo, match[1])
+
+    async def autocomplete(  # pyright: ignore[reportIncompatibleMethodOverride]
+        self,
+        interaction: Interaction,
+        value: str,
+    ) -> list[Choice[str]]:
         try:
-            resp = await github.rest.search.async_issues_and_pull_requests(
-                f"{search} is:issue repo:{repo}",
-                per_page=25,
+            repo, search = self.split_raw_value(interaction, value)
+        except ValueError:
+            return []
+
+        async with GHUtilsBot.get_github_app_of(interaction) as (github, state):
+            match state:
+                case LoginState.LOGGED_IN:
+                    error = None
+                case LoginState.LOGGED_OUT:
+                    error = "⚠️ Log in with `/gh login` to enable autocomplete."
+                case LoginState.EXPIRED:
+                    error = "⚠️ Session expired. Log back in with `/gh login` to reenable autocomplete."
+            if error:
+                return [Choice(name=error, value=value)]
+
+            return [
+                self.build_choice(repo, reference, description)
+                for reference, description in await self.search_for_autocomplete(
+                    github, repo, search
+                )
+            ]
+
+    def split_raw_value(
+        self,
+        interaction: Interaction,
+        value: str,
+    ) -> tuple[Repository, str]:
+        if self.separator in value:
+            raw_repo, rest = value.split(self.separator, maxsplit=1)
+        else:
+            raw_repo = ""
+            rest = value
+
+        if not raw_repo:
+            # TODO: get default repo from user settings
+            raise ValueError(f"Missing username and repository: {value}")
+
+        if not (repo := Repository.parse(raw_repo)):
+            raise ValueError(f"Missing '/' between username and repository: {value}")
+
+        return repo, rest
+
+    def build_choice(
+        self,
+        repo: Repository,
+        reference: str,
+        description: str,
+    ) -> Choice[str]:
+        value = f"{repo}{self.separator}{reference}"
+        name = truncate_str(
+            f"{value}: {description}",
+            limit=100,
+            message="...",
+        )
+        return Choice(name=name, value=value)
+
+
+@dataclass(kw_only=True)
+class IssueReferenceTransformer(ReferenceTransformer[Issue]):
+    issue_type: Literal["issue", "pr"]
+
+    @property
+    def separator(self):
+        return "#"
+
+    @property
+    def reference_pattern(self):
+        return r"\d+"
+
+    async def resolve_reference(
+        self,
+        github: GitHub[Any],
+        repo: Repository,
+        reference: str,
+    ) -> Issue:
+        # FIXME: handle GitHubException
+        return await gh_request(
+            github.rest.issues.async_get(
+                owner=repo.owner,
+                repo=repo.repo,
+                issue_number=int(reference),
+            )
+        )
+
+    async def search_for_autocomplete(
+        self,
+        github: GitHub[Any],
+        repo: Repository,
+        search: str,
+    ) -> list[tuple[str, str]]:
+        try:
+            results = await gh_request(
+                github.rest.search.async_issues_and_pull_requests(
+                    f"{search} is:{self.issue_type} repo:{repo}",
+                    per_page=25,
+                )
             )
         except RequestFailed:
             return []
         except GitHubException as e:
             logger.info(e)
             return []
+        return [(str(result.number), result.title) for result in results.items]
 
-        return [
-            Choice(
-                name=truncate_str(
-                    f"{repo}#{result.number}: {result.title}",
-                    limit=100,
-                    message="...",
-                ),
-                value=f"{repo}#{result.number}",
-            )
-            for result in resp.parsed_data.items
-        ]
+
+IssueParam = Transform[Issue, IssueReferenceTransformer(issue_type="issue")]
+
+PullRequestParam = Transform[PullRequest, IssueReferenceTransformer(issue_type="pr")]
 
 
 @app_commands.allowed_installs(guilds=True, users=True)
@@ -111,25 +225,16 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
     # /gh
 
     @app_commands.command()
-    @app_commands.autocomplete(issue=issue_autocomplete)
-    async def issue(
-        self,
-        interaction: Interaction,
-        issue: str,
-    ):
+    async def issue(self, interaction: Interaction, issue: IssueParam):
         """Get a link to a GitHub issue."""
 
-        print(issue)
-
-        async with self.bot.get_github_app(interaction) as (github, _):
-            user = await gh_request(github.rest.users.async_get_authenticated())
-            await interaction.response.send_message(user.login)
+        await interaction.response.send_message(f"#{issue.number}: {issue.title}")
 
     @app_commands.command()
-    async def pr(self, interaction: Interaction):
+    async def pr(self, interaction: Interaction, pr: PullRequestParam):
         """Get a link to a GitHub pull request."""
 
-        await interaction.response.defer(ephemeral=False)
+        await interaction.response.send_message(f"#{pr.number}: {pr.title}")
 
     @app_commands.command()
     async def commit(self, interaction: Interaction):
