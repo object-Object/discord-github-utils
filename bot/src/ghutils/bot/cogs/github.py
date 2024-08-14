@@ -11,7 +11,7 @@ from discord import Interaction, app_commands
 from discord.app_commands import Choice, Group, Transform, Transformer
 from discord.ext.commands import GroupCog
 from discord.ui import Button, View
-from githubkit import GitHub
+from githubkit import GitHub, Response
 from githubkit.exception import GitHubException, RequestFailed
 from githubkit.rest import Issue, PullRequest
 
@@ -81,7 +81,7 @@ class ReferenceTransformer[T](Transformer, ABC):
         github: GitHub[Any],
         repo: Repository,
         search: str,
-    ) -> Iterable[tuple[str, str]]:
+    ) -> Iterable[tuple[str | int, str]]:
         """Returns a list of `(reference, description)`.
 
         For example, issues would return a list of `(issue_number, issue_title)`.
@@ -96,10 +96,20 @@ class ReferenceTransformer[T](Transformer, ABC):
 
         match = re.match(rf"^({self.reference_pattern})", raw_reference)
         if not match:
-            raise ValueError(f"Invalid reference: {raw_reference}")
+            raise ValueError(f"Malformed reference: {raw_reference}")
 
         async with GHUtilsBot.get_github_app_of(interaction) as (github, _):
-            return await self.resolve_reference(github, repo, match[1])
+            try:
+                return await self.resolve_reference(github, repo, match[1])
+            except GitHubException as e:
+                match e:
+                    case RequestFailed(response=Response(status_code=404)):
+                        raise ValueError(
+                            f"Failed to resolve reference '{value}': Not found"
+                        )
+                    case _:
+                        logger.info(e)
+                        raise ValueError(f"Failed to resolve reference '{value}': {e}")
 
     async def autocomplete(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
@@ -122,12 +132,18 @@ class ReferenceTransformer[T](Transformer, ABC):
             if error:
                 return [Choice(name=error, value=value)]
 
-            return [
-                self.build_choice(repo, reference, description)
-                for reference, description in await self.search_for_autocomplete(
-                    github, repo, search
-                )
-            ]
+            try:
+                return [
+                    self.build_choice(repo, reference, description)
+                    for reference, description in await self.search_for_autocomplete(
+                        github, repo, search
+                    )
+                ]
+            except RequestFailed:
+                return []
+            except GitHubException as e:
+                logger.info(e)
+                return []
 
     def split_raw_value(
         self,
@@ -152,7 +168,7 @@ class ReferenceTransformer[T](Transformer, ABC):
     def build_choice(
         self,
         repo: Repository,
-        reference: str,
+        reference: str | int,
         description: str,
     ) -> Choice[str]:
         value = f"{repo}{self.separator}{reference}"
@@ -182,7 +198,6 @@ class IssueReferenceTransformer(ReferenceTransformer[Issue]):
         repo: Repository,
         reference: str,
     ) -> Issue:
-        # FIXME: handle GitHubException
         return await gh_request(
             github.rest.issues.async_get(
                 owner=repo.owner,
@@ -196,20 +211,14 @@ class IssueReferenceTransformer(ReferenceTransformer[Issue]):
         github: GitHub[Any],
         repo: Repository,
         search: str,
-    ) -> list[tuple[str, str]]:
-        try:
-            results = await gh_request(
-                github.rest.search.async_issues_and_pull_requests(
-                    f"{search} is:{self.issue_type} repo:{repo}",
-                    per_page=25,
-                )
+    ) -> list[tuple[str | int, str]]:
+        results = await gh_request(
+            github.rest.search.async_issues_and_pull_requests(
+                f"{search} is:{self.issue_type} repo:{repo}",
+                per_page=25,
             )
-        except RequestFailed:
-            return []
-        except GitHubException as e:
-            logger.info(e)
-            return []
-        return [(str(result.number), result.title) for result in results.items]
+        )
+        return [(result.number, result.title) for result in results.items]
 
 
 IssueParam = Transform[Issue, IssueReferenceTransformer(issue_type="issue")]
