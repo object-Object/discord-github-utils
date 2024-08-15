@@ -13,7 +13,7 @@ from discord.ext.commands import GroupCog
 from discord.ui import Button, View
 from githubkit import GitHub, Response
 from githubkit.exception import GitHubException, RequestFailed
-from githubkit.rest import Issue, PullRequest
+from githubkit.rest import Commit, Issue, PullRequest
 
 from ghutils.bot.core import GHUtilsCog
 from ghutils.bot.core.bot import GHUtilsBot
@@ -108,7 +108,7 @@ class ReferenceTransformer[T](Transformer, ABC):
                             f"Failed to resolve reference '{value}': Not found"
                         )
                     case _:
-                        logger.info(e)
+                        logger.warning(e)
                         raise ValueError(f"Failed to resolve reference '{value}': {e}")
 
     async def autocomplete(  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -142,7 +142,7 @@ class ReferenceTransformer[T](Transformer, ABC):
             except RequestFailed:
                 return []
             except GitHubException as e:
-                logger.info(e)
+                logger.warning(e)
                 return []
 
     def split_raw_value(
@@ -180,9 +180,9 @@ class ReferenceTransformer[T](Transformer, ABC):
         return Choice(name=name, value=value)
 
 
-@dataclass(kw_only=True)
-class IssueReferenceTransformer(ReferenceTransformer[Issue]):
-    issue_type: Literal["issue", "pr"]
+class IssueOrPRReferenceTransformer[T](ReferenceTransformer[T]):
+    @property
+    def issue_type(self) -> Literal["issue", "pr"]: ...
 
     @property
     def separator(self):
@@ -191,20 +191,6 @@ class IssueReferenceTransformer(ReferenceTransformer[Issue]):
     @property
     def reference_pattern(self):
         return r"\d+"
-
-    async def resolve_reference(
-        self,
-        github: GitHub[Any],
-        repo: Repository,
-        reference: str,
-    ) -> Issue:
-        return await gh_request(
-            github.rest.issues.async_get(
-                owner=repo.owner,
-                repo=repo.repo,
-                issue_number=int(reference),
-            )
-        )
 
     async def search_for_autocomplete(
         self,
@@ -221,9 +207,92 @@ class IssueReferenceTransformer(ReferenceTransformer[Issue]):
         return [(result.number, result.title) for result in results.items]
 
 
-IssueParam = Transform[Issue, IssueReferenceTransformer(issue_type="issue")]
+class IssueReferenceTransformer(IssueOrPRReferenceTransformer[Issue]):
+    @property
+    def issue_type(self):
+        return "issue"
 
-PullRequestParam = Transform[PullRequest, IssueReferenceTransformer(issue_type="pr")]
+    async def resolve_reference(
+        self,
+        github: GitHub[Any],
+        repo: Repository,
+        reference: str,
+    ) -> Issue:
+        return await gh_request(
+            github.rest.issues.async_get(
+                owner=repo.owner,
+                repo=repo.repo,
+                issue_number=int(reference),
+            )
+        )
+
+
+class PullRequestReferenceTransformer(IssueOrPRReferenceTransformer[PullRequest]):
+    @property
+    def issue_type(self):
+        return "pr"
+
+    async def resolve_reference(
+        self,
+        github: GitHub[Any],
+        repo: Repository,
+        reference: str,
+    ) -> PullRequest:
+        return await gh_request(
+            github.rest.pulls.async_get(
+                owner=repo.owner,
+                repo=repo.repo,
+                pull_number=int(reference),
+            )
+        )
+
+
+class CommitReferenceTransformer(ReferenceTransformer[Commit]):
+    @property
+    def separator(self):
+        return "@"
+
+    @property
+    def reference_pattern(self):
+        return r"[0-9a-f]{5,40}"
+
+    async def resolve_reference(
+        self,
+        github: GitHub[Any],
+        repo: Repository,
+        reference: str,
+    ) -> Commit:
+        return await gh_request(
+            github.rest.repos.async_get_commit(
+                owner=repo.owner,
+                repo=repo.repo,
+                ref=reference,
+            )
+        )
+
+    async def search_for_autocomplete(
+        self,
+        github: GitHub[Any],
+        repo: Repository,
+        search: str,
+    ) -> list[tuple[str | int, str]]:
+        results = await gh_request(
+            github.rest.search.async_commits(
+                f"{search} repo:{repo}",
+                per_page=25,
+            )
+        )
+        return [
+            (result.sha[:12], result.commit.message.split("\n")[0])
+            for result in results.items
+        ]
+
+
+IssueParam = Transform[Issue, IssueReferenceTransformer]
+
+PullRequestParam = Transform[PullRequest, PullRequestReferenceTransformer]
+
+CommitParam = Transform[Commit, CommitReferenceTransformer]
 
 
 @app_commands.allowed_installs(guilds=True, users=True)
@@ -237,19 +306,25 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
     async def issue(self, interaction: Interaction, issue: IssueParam):
         """Get a link to a GitHub issue."""
 
-        await interaction.response.send_message(f"#{issue.number}: {issue.title}")
+        await interaction.response.send_message(
+            f"[#{issue.number}](<{issue.html_url}>): {issue.title}"
+        )
 
     @app_commands.command()
     async def pr(self, interaction: Interaction, pr: PullRequestParam):
         """Get a link to a GitHub pull request."""
 
-        await interaction.response.send_message(f"#{pr.number}: {pr.title}")
+        await interaction.response.send_message(
+            f"[#{pr.number}](<{pr.html_url}>): {pr.title}"
+        )
 
     @app_commands.command()
-    async def commit(self, interaction: Interaction):
+    async def commit(self, interaction: Interaction, commit: CommitParam):
         """Get a link to a GitHub commit."""
 
-        await interaction.response.defer(ephemeral=False)
+        await interaction.response.send_message(
+            f"[{commit.sha[:12]}](<{commit.html_url}>): {commit.commit.message}"
+        )
 
     @app_commands.command()
     async def login(self, interaction: Interaction):
