@@ -3,7 +3,8 @@ import sys
 from dataclasses import dataclass
 from typing import Any, Self, cast
 
-from discord.ext.commands import Cog, CogMeta
+from discord.app_commands import Group
+from discord.ext.commands import Cog, CogMeta, GroupCog
 
 from .bot import GHUtilsBot
 
@@ -54,6 +55,13 @@ class GHUtilsCog(Cog, metaclass=GHUtilsCogMeta):
     def env(self):
         return self.bot.env
 
+    async def cog_load(self):
+        if isinstance(self, GroupCog):
+            assert self.app_command
+            for child in self.__class__.__dict__.values():
+                if isinstance(child, type) and issubclass(child, SubGroup):
+                    self.app_command.add_command(child(bot=self.bot))
+
     # required to make the help command not fail
     def __hash__(self) -> int:
         return hash(self.__class__)
@@ -62,3 +70,17 @@ class GHUtilsCog(Cog, metaclass=GHUtilsCogMeta):
         if isinstance(other, GHUtilsCog):
             return self.__class__ == other.__class__
         return super().__eq__(other)
+
+
+@dataclass
+class SubGroup(Group):
+    """Base class for subcommand groups.
+
+    Automatically added as a subcommand if created as an inner class of a class that
+    inherits from both `GHUtilsCog` and `GroupCog`.
+    """
+
+    bot: GHUtilsBot
+
+    def __post_init__(self):
+        super().__init__()

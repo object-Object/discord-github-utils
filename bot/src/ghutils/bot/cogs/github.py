@@ -4,11 +4,10 @@ import logging
 import re
 import uuid
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from typing import Any, Iterable, Literal
 
 from discord import Interaction, app_commands
-from discord.app_commands import Choice, Group, Transform, Transformer
+from discord.app_commands import Choice, Transform, Transformer
 from discord.ext.commands import GroupCog
 from discord.ui import Button, View
 from githubkit import GitHub, Response
@@ -17,27 +16,13 @@ from githubkit.rest import Commit, Issue, PullRequest
 
 from ghutils.bot.core import GHUtilsCog
 from ghutils.bot.core.bot import GHUtilsBot
+from ghutils.bot.core.cog import SubGroup
 from ghutils.bot.core.types import LoginState
 from ghutils.bot.db.models import UserGitHubTokens, UserLogin
-from ghutils.bot.utils.github import gh_request
+from ghutils.bot.utils.github import Repository, gh_request
 from ghutils.bot.utils.strings import truncate_str
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class Repository:
-    owner: str
-    repo: str
-
-    @classmethod
-    def parse(cls, value: str):
-        if "/" in value:
-            owner, repo = value.split("/")
-            return cls(owner=owner, repo=repo)
-
-    def __str__(self) -> str:
-        return f"{self.owner}/{self.repo}"
 
 
 class RepositoryTransformer(Transformer):
@@ -371,25 +356,34 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
                     ephemeral=True,
                 )
 
-    # /gh list
+    class List(SubGroup):
+        """List values from GitHub."""
 
-    gh_list = Group(
-        name="list",
-        description="Commands to list values from GitHub.",
-    )
+        @app_commands.command()
+        async def issues(
+            self,
+            interaction: Interaction,
+            repo: RepositoryParam,
+        ):
+            async with self.bot.get_github_app(interaction) as (github, _):
+                issues = [issue async for issue in _list_issues(github, repo, limit=10)]
 
-    @gh_list.command()
-    async def issues(
-        self,
-        interaction: Interaction,
-        repo: RepositoryParam,
-    ):
-        async with self.bot.get_github_app(interaction) as (github, _):
-            issues = [issue async for issue in _list_issues(github, repo, limit=10)]
+                await interaction.response.send_message(
+                    "\n".join(f"- {issue.title}" for issue in issues)
+                )
 
-            await interaction.response.send_message(
-                "\n".join(f"- {issue.title}" for issue in issues)
-            )
+    class Config(SubGroup):
+        """Configure the behaviour of the bot."""
+
+        @app_commands.command()
+        async def default_repo(
+            self,
+            interaction: Interaction,
+            repo: RepositoryParam | None,
+        ):
+            """Set or clear the default repository for commands such as `/gh issue`."""
+            print(repo)
+            await interaction.response.defer(ephemeral=True)
 
 
 async def _list_issues(
