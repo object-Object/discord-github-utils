@@ -25,7 +25,16 @@ class SyncCog(GHUtilsCog):
 
         await ctx.reply("Synced guild slash commands to this guild.")
 
-    @sync.command()
+    @sync.command(name="all", alias=["global"])
+    async def sync_all(self, ctx: GHUtilsContext):
+        """Sync global slash commands to all guilds."""
+
+        async with ctx.channel.typing():
+            await self.bot.tree.sync()
+
+        await ctx.reply("Synced global slash commands to all guilds.")
+
+    @commands.group(invoke_without_command=True)
     @commands.guild_only()
     async def clear(self, ctx: GHUtilsContext):
         """Remove guild slash commands from the current guild."""
@@ -38,11 +47,12 @@ class SyncCog(GHUtilsCog):
 
         await ctx.reply("Removed guild slash commands from this guild.")
 
-    @sync.command(alias=["global"])
-    async def all(self, ctx: GHUtilsContext):
+    @clear.command(name="all", alias=["global"])
+    async def clear_all(self, ctx: GHUtilsContext):
         """Sync global slash commands to all guilds."""
 
         async with ctx.channel.typing():
+            self.bot.tree.clear_commands(guild=None)
             await self.bot.tree.sync()
 
-        await ctx.reply("Synced global slash commands to all guilds.")
+        await ctx.reply("Removed global slash commands from all guilds.")
