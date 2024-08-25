@@ -1,6 +1,7 @@
 import asyncio
 
-from ghutils.bot.core import GHUtilsBot, GHUtilsEnv
+from ghutils.bot.core.bot import GHUtilsBot
+from ghutils.bot.core.env import GHUtilsEnv
 from ghutils.bot.db.models import create_db_and_tables
 from ghutils.bot.utils.logging import setup_logging
 
