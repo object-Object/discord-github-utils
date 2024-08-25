@@ -4,7 +4,8 @@ import logging
 import re
 import uuid
 from abc import ABC, abstractmethod
-from typing import Any, Iterable, Literal
+from enum import Enum, auto
+from typing import Any, Callable, Iterable, Literal, cast, overload
 
 from discord import Interaction, app_commands
 from discord.app_commands import Choice, Transform, Transformer
@@ -13,16 +14,27 @@ from discord.ui import Button, View
 from githubkit import GitHub, Response
 from githubkit.exception import GitHubException, RequestFailed
 from githubkit.rest import Commit, Issue, PullRequest
+from sqlmodel import Session
 
 from ghutils.bot.core import GHUtilsCog
 from ghutils.bot.core.bot import GHUtilsBot
 from ghutils.bot.core.cog import SubGroup
 from ghutils.bot.core.types import LoginState
-from ghutils.bot.db.models import UserGitHubTokens, UserLogin
+from ghutils.bot.db.models import (
+    UserGitHubTokens,
+    UserGlobalConfig,
+    UserGuildConfig,
+    UserLogin,
+)
 from ghutils.bot.utils.github import Repository, gh_request
 from ghutils.bot.utils.strings import truncate_str
 
 logger = logging.getLogger(__name__)
+
+
+class ConfigScope(Enum):
+    GLOBAL = auto()
+    GUILD = auto()
 
 
 class RepositoryTransformer(Transformer):
@@ -30,7 +42,7 @@ class RepositoryTransformer(Transformer):
         if result := Repository.parse(value):
             return result
 
-        async with GHUtilsBot.get_github_app_of(interaction) as (github, state):
+        async with GHUtilsBot.github_app_of(interaction) as (github, state):
             if state != LoginState.LOGGED_IN:
                 raise ValueError(
                     f"Value does not contain '/' and user is not logged in: {value}"
@@ -77,13 +89,13 @@ class ReferenceTransformer[T](Transformer, ABC):
         interaction: Interaction,
         value: str,
     ) -> T:
-        repo, raw_reference = self.split_raw_value(interaction, value)
+        repo, raw_reference = await self.get_repo_and_reference(interaction, value)
 
         match = re.match(rf"^({self.reference_pattern})", raw_reference)
         if not match:
             raise ValueError(f"Malformed reference: {raw_reference}")
 
-        async with GHUtilsBot.get_github_app_of(interaction) as (github, _):
+        async with GHUtilsBot.github_app_of(interaction) as (github, _):
             try:
                 return await self.resolve_reference(github, repo, match[1])
             except GitHubException as e:
@@ -101,12 +113,7 @@ class ReferenceTransformer[T](Transformer, ABC):
         interaction: Interaction,
         value: str,
     ) -> list[Choice[str]]:
-        try:
-            repo, search = self.split_raw_value(interaction, value)
-        except ValueError:
-            return []
-
-        async with GHUtilsBot.get_github_app_of(interaction) as (github, state):
+        async with GHUtilsBot.github_app_of(interaction) as (github, state):
             match state:
                 case LoginState.LOGGED_IN:
                     error = None
@@ -116,6 +123,11 @@ class ReferenceTransformer[T](Transformer, ABC):
                     error = "⚠️ Session expired. Log back in with `/gh login` to reenable autocomplete."
             if error:
                 return [Choice(name=error, value=value)]
+
+            try:
+                repo, search = await self.get_repo_and_reference(interaction, value)
+            except ValueError:
+                return []
 
             try:
                 return [
@@ -130,7 +142,7 @@ class ReferenceTransformer[T](Transformer, ABC):
                 logger.warning(e)
                 return []
 
-    def split_raw_value(
+    async def get_repo_and_reference(
         self,
         interaction: Interaction,
         value: str,
@@ -142,7 +154,10 @@ class ReferenceTransformer[T](Transformer, ABC):
             rest = value
 
         if not raw_repo:
-            # TODO: get default repo from user settings
+            with GHUtilsBot.db_session_of(interaction) as session:
+                config = await _get_config(interaction, session, scope=None)
+                if repo := config.default_repo:
+                    return repo, rest
             raise ValueError(f"Missing username and repository: {value}")
 
         if not (repo := Repository.parse(raw_repo)):
@@ -365,7 +380,7 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
             interaction: Interaction,
             repo: RepositoryParam,
         ):
-            async with self.bot.get_github_app(interaction) as (github, _):
+            async with self.bot.github_app(interaction) as (github, _):
                 issues = [issue async for issue in _list_issues(github, repo, limit=10)]
 
                 await interaction.response.send_message(
@@ -380,10 +395,112 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
             self,
             interaction: Interaction,
             repo: RepositoryParam | None,
+            scope: ConfigScope | None,
         ):
             """Set or clear the default repository for commands such as `/gh issue`."""
-            print(repo)
-            await interaction.response.defer(ephemeral=True)
+
+            with self.bot.db_session() as session:
+                if config := await _get_config(interaction, session, scope):
+                    old_value = config.default_repo
+                    if old_value == repo:
+                        if repo:
+                            message = f"default_repo is already `{repo}`."
+                        else:
+                            message = "default_repo is already unset."
+                        await interaction.response.send_message(
+                            f"❌ {message}",
+                            ephemeral=True,
+                        )
+                        return
+
+                    config.default_repo = repo
+                    session.add(config)
+                    session.commit()
+
+                    if not repo:
+                        message = f"Unset default_repo (was `{old_value}`)."
+                    elif old_value:
+                        message = (
+                            f"Changed default repo from `{old_value}` to `{repo}`."
+                        )
+                    else:
+                        message = f"Set default_repo to `{repo}`."
+                    await interaction.response.send_message(
+                        f"✅ {message}",
+                        ephemeral=True,
+                    )
+
+
+@overload
+async def _get_config(
+    interaction: Interaction,
+    session: Session,
+    scope: Literal[ConfigScope.GLOBAL],
+) -> UserGlobalConfig: ...
+
+
+@overload
+async def _get_config(
+    interaction: Interaction,
+    session: Session,
+    scope: Literal[ConfigScope.GUILD],
+) -> UserGuildConfig | None: ...
+
+
+@overload
+async def _get_config(
+    interaction: Interaction,
+    session: Session,
+    scope: None,
+) -> UserGlobalConfig | UserGuildConfig: ...
+
+
+@overload
+async def _get_config(
+    interaction: Interaction,
+    session: Session,
+    scope: ConfigScope,
+) -> UserGlobalConfig | UserGuildConfig | None: ...
+
+
+async def _get_config(
+    interaction: Interaction,
+    session: Session,
+    scope: ConfigScope | None,
+) -> UserGlobalConfig | UserGuildConfig | None:
+    user_id = interaction.user.id
+    guild_id = interaction.guild_id
+    match scope:
+        case ConfigScope.GUILD | None if guild_id is not None:
+            return _get_or_create(
+                session,
+                UserGuildConfig,
+                user_id=user_id,
+                guild_id=guild_id,
+            )
+        case ConfigScope.GUILD:
+            await interaction.response.send_message(
+                "❌ Cannot set per-guild config options outside of a guild.",
+                ephemeral=True,
+            )
+            return
+        case ConfigScope.GLOBAL | None:
+            return _get_or_create(
+                session,
+                UserGlobalConfig,
+                user_id=user_id,
+            )
+
+
+def _get_or_create[**P, T](
+    session: Session,
+    model_type: Callable[P, T] | type[T],
+    *args: P.args,
+    **kwargs: P.kwargs,
+) -> T:
+    assert isinstance(model_type, type)
+    model_type = cast(type[T], model_type)
+    return session.get(model_type, kwargs) or model_type(*args, **kwargs)
 
 
 async def _list_issues(

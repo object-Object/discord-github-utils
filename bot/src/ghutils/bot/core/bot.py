@@ -43,8 +43,12 @@ class GHUtilsBot(Bot):
         return bot
 
     @classmethod
-    def get_github_app_of(cls, interaction: Interaction):
-        return cls.of(interaction).get_github_app(interaction)
+    def db_session_of(cls, interaction: Interaction):
+        return cls.of(interaction).db_session()
+
+    @classmethod
+    def github_app_of(cls, interaction: Interaction):
+        return cls.of(interaction).github_app(interaction)
 
     async def load_cogs(self):
         for cog in iter_modules(cogs, skip_internal=True):
@@ -62,7 +66,7 @@ class GHUtilsBot(Bot):
         )
 
     @asynccontextmanager
-    async def get_github_app(self, user_id: int | Interaction):
+    async def github_app(self, user_id: int | Interaction):
         match user_id:
             case int():
                 pass

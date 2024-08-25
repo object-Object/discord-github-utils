@@ -5,17 +5,19 @@ from githubkit import OAuthTokenAuthStrategy
 from sqlalchemy import Engine
 from sqlmodel import Field, SQLModel  # pyright: ignore[reportUnknownVariableType]
 
-from .types import TZAwareDateTime
+from ghutils.bot.utils.github import Repository
+
+from .types import DatetimeType, RepositoryType
 
 
 class UserGitHubTokens(SQLModel, table=True):
     user_id: int = Field(primary_key=True, sa_type=sa.BigInteger)
 
     token: str | None = Field(repr=False)
-    expire_time: datetime | None = Field(sa_type=TZAwareDateTime)
+    expire_time: datetime | None = Field(sa_type=DatetimeType)
 
     refresh_token: str | None = Field(repr=False)
-    refresh_token_expire_time: datetime | None = Field(sa_type=TZAwareDateTime)
+    refresh_token_expire_time: datetime | None = Field(sa_type=DatetimeType)
 
     @classmethod
     def from_auth(cls, user_id: int, auth: OAuthTokenAuthStrategy):
@@ -34,7 +36,6 @@ class UserGitHubTokens(SQLModel, table=True):
         self.refresh_token_expire_time = auth.refresh_token_expire_time
 
     def to_auth(self, client_id: str, client_secret: str):
-        self._fix_timezones()
         return OAuthTokenAuthStrategy(
             client_id=client_id,
             client_secret=client_secret,
@@ -50,25 +51,28 @@ class UserGitHubTokens(SQLModel, table=True):
 
         # say it's expired if the expiry time is earlier than one minute in the future
         # (to hopefully avoid weird boundary conditions around expiry)
-        self._fix_timezones()
         expire_time = self.refresh_token_expire_time
         one_minute_from_now = datetime.now(UTC) + timedelta(minutes=1)
         return expire_time <= one_minute_from_now
-
-    def _fix_timezones(self):
-        # TODO: this should really be a validator, but SQLModel doesn't run them :/
-        # https://github.com/tiangolo/sqlmodel/issues/52
-        if self.expire_time:
-            self.expire_time = self.expire_time.replace(tzinfo=UTC)
-        if self.refresh_token_expire_time:
-            self.refresh_token_expire_time = self.refresh_token_expire_time.replace(
-                tzinfo=UTC
-            )
 
 
 class UserLogin(SQLModel, table=True):
     user_id: int = Field(primary_key=True, sa_type=sa.BigInteger)
     login_id: str
+
+
+class UserCommonConfig(SQLModel):
+    user_id: int = Field(primary_key=True, sa_type=sa.BigInteger)
+
+    default_repo: Repository | None = Field(default=None, sa_type=RepositoryType)
+
+
+class UserGlobalConfig(UserCommonConfig, table=True):
+    pass
+
+
+class UserGuildConfig(UserCommonConfig, table=True):
+    guild_id: int = Field(primary_key=True, sa_type=sa.BigInteger)
 
 
 def create_db_and_tables(engine: Engine):
