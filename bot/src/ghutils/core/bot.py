@@ -2,13 +2,19 @@ import logging
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 
-from discord import Game, Intents, Interaction
+from discord import (
+    BaseActivity,
+    CustomActivity,
+    Intents,
+    Interaction,
+)
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, NoEntryPointError
 from githubkit import GitHub
 from sqlmodel import Session, create_engine
 
 from ghutils import cogs
+from ghutils.common.__version__ import VERSION
 from ghutils.db.models import UserGitHubTokens
 from ghutils.utils.imports import iter_modules
 
@@ -32,7 +38,7 @@ class GHUtilsBot(Bot):
         super().__init__(
             command_prefix=commands.when_mentioned,
             intents=Intents.default(),
-            activity=Game(f"version {self.env.commit} ({self.env.commit_date})"),
+            activity=self._get_activity(self.env),
         )
         self.engine = create_engine(self.env.db_url)
 
@@ -49,6 +55,13 @@ class GHUtilsBot(Bot):
     @classmethod
     def github_app_of(cls, interaction: Interaction):
         return cls.of(interaction).github_app(interaction)
+
+    @classmethod
+    def _get_activity(cls, env: GHUtilsEnv) -> BaseActivity:
+        name = f"/gh | v{VERSION}"
+        if env.commit_date:
+            name += f" ({env.commit_date})"
+        return CustomActivity(name)
 
     async def load_cogs(self):
         for cog in iter_modules(cogs, skip_internal=True):

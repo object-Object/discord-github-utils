@@ -79,8 +79,8 @@ class GHUtilsEnv(BaseSettings):
     environment: Literal["dev", "prod"]
     api_port: int = 5000
 
-    commit: str = "Unknown"
-    commit_date: str = "Unknown"
+    commit: str | None = None
+    commit_date: str | None = None
 
     github: GitHubSettings = Field(default_factory=GitHubSettings.get)
     """GitHub-related environment variables."""
