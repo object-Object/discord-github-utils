@@ -11,9 +11,9 @@ from githubkit import GitHub, Response
 from githubkit.exception import GitHubException, RequestFailed
 from githubkit.rest import Commit, Issue, PullRequest
 
-from ghutils.bot.core.bot import GHUtilsBot
-from ghutils.bot.core.types import LoginState
-from ghutils.bot.db.config import get_config
+from ghutils.core.bot import GHUtilsBot
+from ghutils.core.types import LoginState
+from ghutils.db.config import get_config
 
 from ..github import Repository, gh_request
 from ..strings import truncate_str

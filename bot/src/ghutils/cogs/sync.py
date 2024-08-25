@@ -1,7 +1,7 @@
 from discord.ext import commands
 
-from ghutils.bot.core.bot import GHUtilsContext
-from ghutils.bot.core.cog import GHUtilsCog
+from ghutils.core.bot import GHUtilsContext
+from ghutils.core.cog import GHUtilsCog
 
 
 class SyncCog(GHUtilsCog):

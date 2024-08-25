@@ -3,8 +3,8 @@ import logging
 from discord import Interaction
 from discord.ext.commands import Cog
 
-from ghutils.bot.core.cog import GHUtilsCog
-from ghutils.bot.utils.discord.commands import get_command, print_command
+from ghutils.core.cog import GHUtilsCog
+from ghutils.utils.discord.commands import get_command, print_command
 
 logger = logging.getLogger(__name__)
 

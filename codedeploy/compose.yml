@@ -8,7 +8,7 @@ services:
       - source: github_private_key
         target: /app/secrets/github__private_key
     environment:
-      MODULE: ghutils.bot.app
+      MODULE: ghutils.app
       DB_URL: postgresql://postgres:postgres@postgres/postgres # postgres
       HEALTH_CHECK_DISPLAY_NAME: Docker
       HEALTH_CHECK_PORT: 40404
@@ -29,7 +29,7 @@ services:
     ports:
       - 7100:7100
     environment:
-      MODULE: ghutils.bot.api.app
+      MODULE: ghutils.api.app
       API_PORT: 7100
       DB_URL: postgresql://postgres:postgres@postgres/postgres
     depends_on:

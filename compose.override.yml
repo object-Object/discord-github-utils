@@ -7,8 +7,8 @@ services:
     develop:
       watch:
         - action: sync
-          path: bot/src/ghutils/bot/cogs
-          target: /app/bot/src/ghutils/bot/cogs
+          path: bot/src/ghutils/cogs
+          target: /app/bot/src/ghutils/cogs
 
   api:
     build: .

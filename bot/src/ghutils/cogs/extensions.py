@@ -2,10 +2,10 @@ import logging
 
 from discord.ext import commands
 
-from ghutils.bot.core.bot import COGS_MODULE, GHUtilsContext
-from ghutils.bot.core.cog import GHUtilsCog
-from ghutils.bot.utils.collections import partition
-from ghutils.bot.utils.discord.commands import paginate
+from ghutils.core.bot import COGS_MODULE, GHUtilsContext
+from ghutils.core.cog import GHUtilsCog
+from ghutils.utils.collections import partition
+from ghutils.utils.discord.commands import paginate
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +51,7 @@ class ExtensionsCog(GHUtilsCog):
 
         for name in extensions:
             logger.info(f"Reloading extension: {name}")
-            await self.bot.reload_extension(name, package="ghutils.bot.cogs")
+            await self.bot.reload_extension(name, package="ghutils.cogs")
 
         s = "" if len(extensions) == 1 else "s"
         await ctx.reply(f"Reloaded {len(extensions)} extension{s}.")

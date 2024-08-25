@@ -9,19 +9,19 @@ from discord.ext.commands import GroupCog
 from discord.ui import Button, View
 from githubkit import GitHub
 
-from ghutils.bot.core.cog import GHUtilsCog, SubGroup
-from ghutils.bot.db.config import ConfigScope, get_config
-from ghutils.bot.db.models import (
+from ghutils.core.cog import GHUtilsCog, SubGroup
+from ghutils.db.config import ConfigScope, get_config
+from ghutils.db.models import (
     UserGitHubTokens,
     UserLogin,
 )
-from ghutils.bot.utils.discord.references import (
+from ghutils.utils.discord.references import (
     CommitReference,
     IssueReference,
     PRReference,
 )
-from ghutils.bot.utils.discord.transformers import RepositoryParam
-from ghutils.bot.utils.github import Repository
+from ghutils.utils.discord.transformers import RepositoryParam
+from ghutils.utils.github import Repository
 
 logger = logging.getLogger(__name__)
 

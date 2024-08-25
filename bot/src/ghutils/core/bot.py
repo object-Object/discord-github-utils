@@ -8,9 +8,9 @@ from discord.ext.commands import Bot, Context, NoEntryPointError
 from githubkit import GitHub
 from sqlmodel import Session, create_engine
 
-from ghutils.bot import cogs
-from ghutils.bot.db.models import UserGitHubTokens
-from ghutils.bot.utils.imports import iter_modules
+from ghutils import cogs
+from ghutils.db.models import UserGitHubTokens
+from ghutils.utils.imports import iter_modules
 
 from .env import GHUtilsEnv
 from .types import LoginState

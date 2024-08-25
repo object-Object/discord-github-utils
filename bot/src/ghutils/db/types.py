@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from sqlalchemy import Dialect
 from sqlalchemy.types import DateTime, String, TypeDecorator
 
-from ghutils.bot.utils.github import Repository
+from ghutils.utils.github import Repository
 
 
 class RepositoryType(TypeDecorator[Repository]):

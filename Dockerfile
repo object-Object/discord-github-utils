@@ -13,7 +13,7 @@ COPY common/src/ghutils/common/__version__.py common/src/ghutils/common/
 RUN mkdir -p common/src/ghutils/common && touch common/src/ghutils/common/__init__.py
 
 COPY bot/pyproject.toml bot/
-RUN mkdir -p bot/src/ghutils/bot && touch bot/src/ghutils/bot/__init__.py
+RUN mkdir -p bot/src/ghutils && touch bot/src/ghutils/app.py
 
 # https://github.com/astral-sh/uv/blob/main/docs/docker.md
 RUN --mount=from=uv,source=/uv,target=/bin/uv \

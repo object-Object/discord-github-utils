@@ -8,7 +8,7 @@ from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings as PydanticBaseSettings, SettingsConfigDict
 from yarl import URL
 
-from ghutils.bot.db.models import UserGitHubTokens
+from ghutils.db.models import UserGitHubTokens
 
 logger = logging.getLogger(__name__)
 

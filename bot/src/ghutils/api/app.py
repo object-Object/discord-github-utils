@@ -10,9 +10,9 @@ from pydantic import ValidationError
 from sqlalchemy import Engine
 from sqlmodel import Session, create_engine
 
-from ghutils.bot.core.env import GHUtilsEnv
-from ghutils.bot.db.engine import check_db_connection
-from ghutils.bot.db.models import UserGitHubTokens, UserLogin
+from ghutils.core.env import GHUtilsEnv
+from ghutils.db.engine import check_db_connection
+from ghutils.db.models import UserGitHubTokens, UserLogin
 
 logger = logging.getLogger(__name__)
 

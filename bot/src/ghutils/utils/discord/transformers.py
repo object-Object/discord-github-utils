@@ -3,8 +3,8 @@ from __future__ import annotations
 from discord import Interaction
 from discord.app_commands import Transform, Transformer
 
-from ghutils.bot.core.bot import GHUtilsBot
-from ghutils.bot.core.types import LoginState
+from ghutils.core.bot import GHUtilsBot
+from ghutils.core.types import LoginState
 
 from ..github import Repository, gh_request
 

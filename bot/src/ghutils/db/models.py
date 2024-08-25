@@ -5,7 +5,7 @@ from githubkit import OAuthTokenAuthStrategy
 from sqlalchemy import Engine
 from sqlmodel import Field, SQLModel  # pyright: ignore[reportUnknownVariableType]
 
-from ghutils.bot.utils.github import Repository
+from ghutils.utils.github import Repository
 
 from .types import DatetimeType, RepositoryType
 
