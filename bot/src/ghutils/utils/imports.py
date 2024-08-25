@@ -1,18 +1,17 @@
-from pathlib import Path
-from typing import Any
+from importlib import resources
+from types import ModuleType
 
 
 def fullname(cls: type):
     return f"{cls.__module__}.{cls.__qualname__}"
 
 
-def iter_modules(parent: Any, skip_internal: bool = False):
-    for filename in parent.__loader__.get_resource_reader().contents():
-        path = Path(filename)
-        if (
-            path.suffix != ".py"
-            or path.stem in {"__init__", "__main__"}
-            or (skip_internal and path.stem.startswith("_"))
-        ):
-            continue
-        yield f"{parent.__name__}.{path.stem}"
+def iter_modules(parent: ModuleType, skip_internal: bool = False):
+    with resources.as_file(resources.files(parent)) as parent_path:
+        for path in parent_path.rglob("*.py"):
+            if path.stem in {"__init__", "__main__"} or (
+                skip_internal and path.stem.startswith("_")
+            ):
+                continue
+            path = path.relative_to(parent_path).with_suffix("")
+            yield ".".join([parent.__name__, *path.parts])
