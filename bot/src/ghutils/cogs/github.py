@@ -10,7 +10,6 @@ from discord.ui import Button, View
 from githubkit import GitHub
 
 from ghutils.core.cog import GHUtilsCog, SubGroup
-from ghutils.db.config import ConfigScope, get_config
 from ghutils.db.models import (
     UserGitHubTokens,
     UserLogin,
@@ -117,49 +116,6 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
                 await interaction.response.send_message(
                     "\n".join(f"- {issue.title}" for issue in issues)
                 )
-
-    class Config(SubGroup):
-        """Configure the behaviour of the bot."""
-
-        @app_commands.command()
-        async def default_repo(
-            self,
-            interaction: Interaction,
-            repo: RepositoryParam | None,
-            scope: ConfigScope | None,
-        ):
-            """Set or clear the default repository for commands such as `/gh issue`."""
-
-            with self.bot.db_session() as session:
-                if config := await get_config(interaction, session, scope):
-                    old_value = config.default_repo
-                    if old_value == repo:
-                        if repo:
-                            message = f"default_repo is already `{repo}`."
-                        else:
-                            message = "default_repo is already unset."
-                        await interaction.response.send_message(
-                            f"❌ {message}",
-                            ephemeral=True,
-                        )
-                        return
-
-                    config.default_repo = repo
-                    session.add(config)
-                    session.commit()
-
-                    if not repo:
-                        message = f"Unset default_repo (was `{old_value}`)."
-                    elif old_value:
-                        message = (
-                            f"Changed default repo from `{old_value}` to `{repo}`."
-                        )
-                    else:
-                        message = f"Set default_repo to `{repo}`."
-                    await interaction.response.send_message(
-                        f"✅ {message}",
-                        ephemeral=True,
-                    )
 
 
 async def _list_issues(

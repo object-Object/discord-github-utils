@@ -1,81 +1,86 @@
 from __future__ import annotations
 
-from enum import Enum, auto
-from typing import Callable, Literal, cast, overload
+from dataclasses import dataclass
+from typing import Callable, cast, overload
 
 from discord import Interaction
 from sqlmodel import Session
 
-from .models import (
-    UserGlobalConfig,
-    UserGuildConfig,
-)
+from .models import GuildConfig, UserConfig, UserGuildConfig
 
 
-class ConfigScope(Enum):
-    GLOBAL = auto()
-    GUILD = auto()
+@dataclass
+class GlobalConfigs:
+    user: UserConfig
 
 
-@overload
-async def get_config(
-    interaction: Interaction,
-    session: Session,
-    scope: Literal[ConfigScope.GLOBAL],
-) -> UserGlobalConfig: ...
+@dataclass
+class GuildConfigs(GlobalConfigs):
+    user_guild: UserGuildConfig
+    guild: GuildConfig
 
 
 @overload
-async def get_config(
-    interaction: Interaction,
+def get_configs(
     session: Session,
-    scope: Literal[ConfigScope.GUILD],
-) -> UserGuildConfig | None: ...
+    interaction: Interaction,
+) -> GlobalConfigs | GuildConfigs: ...
 
 
 @overload
-async def get_config(
-    interaction: Interaction,
+def get_configs(
     session: Session,
-    scope: None,
-) -> UserGlobalConfig | UserGuildConfig: ...
-
-
-@overload
-async def get_config(
     interaction: Interaction,
+    guild_id: int,
+) -> GuildConfigs: ...
+
+
+def get_configs(
     session: Session,
-    scope: ConfigScope,
-) -> UserGlobalConfig | UserGuildConfig | None: ...
-
-
-async def get_config(
     interaction: Interaction,
-    session: Session,
-    scope: ConfigScope | None,
-) -> UserGlobalConfig | UserGuildConfig | None:
-    user_id = interaction.user.id
-    guild_id = interaction.guild_id
-    match scope:
-        case ConfigScope.GUILD | None if guild_id is not None:
-            return _get_or_create(
-                session,
-                UserGuildConfig,
-                user_id=user_id,
-                guild_id=guild_id,
-            )
-        case ConfigScope.GUILD:
-            await interaction.response.send_message(
-                "❌ Cannot set per-guild config options outside of a guild.",
-                ephemeral=True,
-            )
-            return
-        case ConfigScope.GLOBAL | None:
-            return _get_or_create(
-                session,
-                UserGlobalConfig,
-                user_id=user_id,
-            )
+    guild_id: int | None = None,
+) -> GlobalConfigs | GuildConfigs:
+    guild_id = guild_id or interaction.guild_id
+
+    if not guild_id:
+        return GlobalConfigs(
+            user=get_user_config(session, interaction),
+        )
+
+    return GuildConfigs(
+        user=get_user_config(session, interaction),
+        user_guild=get_user_guild_config(session, interaction),
+        guild=get_guild_config(session, interaction),
+    )
+
+
+def get_user_config(session: Session, interaction: Interaction):
+    return _get_or_create(
+        session,
+        UserConfig,
+        user_id=interaction.user.id,
+    )
+
+
+def get_user_guild_config(session: Session, interaction: Interaction):
+    if not interaction.guild_id:
+        raise ValueError("get_user_guild_config can only be used in a guild")
+    return _get_or_create(
+        session,
+        UserGuildConfig,
+        user_id=interaction.user.id,
+        guild_id=interaction.guild_id,
+    )
+
+
+def get_guild_config(session: Session, interaction: Interaction):
+    if not interaction.guild_id:
+        raise ValueError("get_guild_config can only be used in a guild")
+    return _get_or_create(
+        session,
+        GuildConfig,
+        guild_id=interaction.guild_id,
+    )
 
 
 def _get_or_create[**P, T](

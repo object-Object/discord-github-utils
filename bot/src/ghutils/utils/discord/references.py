@@ -13,7 +13,6 @@ from githubkit.rest import Commit, Issue, PullRequest
 
 from ghutils.core.bot import GHUtilsBot
 from ghutils.core.types import LoginState
-from ghutils.db.config import get_config
 
 from ..github import Repository, gh_request
 from ..strings import truncate_str
@@ -120,10 +119,10 @@ class ReferenceTransformer[T](Transformer, ABC):
             rest = value
 
         if not raw_repo:
-            with GHUtilsBot.db_session_of(interaction) as session:
-                config = await get_config(interaction, session, scope=None)
-                if repo := config.default_repo:
-                    return repo, rest
+            # with GHUtilsBot.db_session_of(interaction) as session:
+            #     config = await get_config(interaction, session, scope=None)
+            #     if repo := config.default_repo:
+            #         return repo, rest
             raise ValueError(f"Missing username and repository: {value}")
 
         if not (repo := Repository.parse(raw_repo)):

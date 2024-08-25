@@ -1,8 +1,7 @@
 from datetime import UTC, datetime, timedelta
 
-import sqlalchemy as sa
 from githubkit import OAuthTokenAuthStrategy
-from sqlalchemy import Engine
+from sqlalchemy import BigInteger, Engine
 from sqlmodel import Field, SQLModel  # pyright: ignore[reportUnknownVariableType]
 
 from ghutils.utils.github import Repository
@@ -11,7 +10,7 @@ from .types import DatetimeType, RepositoryType
 
 
 class UserGitHubTokens(SQLModel, table=True):
-    user_id: int = Field(primary_key=True, sa_type=sa.BigInteger)
+    user_id: int = Field(primary_key=True, sa_type=BigInteger)
 
     token: str | None = Field(repr=False)
     expire_time: datetime | None = Field(sa_type=DatetimeType)
@@ -57,22 +56,27 @@ class UserGitHubTokens(SQLModel, table=True):
 
 
 class UserLogin(SQLModel, table=True):
-    user_id: int = Field(primary_key=True, sa_type=sa.BigInteger)
+    user_id: int = Field(primary_key=True, sa_type=BigInteger)
     login_id: str
 
 
-class UserCommonConfig(SQLModel):
-    user_id: int = Field(primary_key=True, sa_type=sa.BigInteger)
+class UserConfig(SQLModel, table=True):
+    user_id: int = Field(primary_key=True, sa_type=BigInteger)
 
     default_repo: Repository | None = Field(default=None, sa_type=RepositoryType)
 
 
-class UserGlobalConfig(UserCommonConfig, table=True):
-    pass
+class UserGuildConfig(SQLModel, table=True):
+    user_id: int = Field(primary_key=True, sa_type=BigInteger)
+    guild_id: int = Field(primary_key=True, sa_type=BigInteger)
+
+    default_repo: Repository | None = Field(default=None, sa_type=RepositoryType)
 
 
-class UserGuildConfig(UserCommonConfig, table=True):
-    guild_id: int = Field(primary_key=True, sa_type=sa.BigInteger)
+class GuildConfig(SQLModel, table=True):
+    guild_id: int = Field(primary_key=True, sa_type=BigInteger)
+
+    default_repo: Repository | None = Field(default=None, sa_type=RepositoryType)
 
 
 def create_db_and_tables(engine: Engine):
