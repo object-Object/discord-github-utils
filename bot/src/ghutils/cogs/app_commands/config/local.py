@@ -2,8 +2,11 @@ from discord import Interaction, app_commands
 from discord.ext.commands import GroupCog
 
 from ghutils.core.cog import GHUtilsCog
-from ghutils.utils.discord.config import ConfigAction
+from ghutils.db.config import get_user_guild_config
+from ghutils.db.models import UserGuildConfig
+from ghutils.utils.discord.config import Accessor, ConfigAction
 from ghutils.utils.discord.transformers import RepositoryParam
+from ghutils.utils.github import Repository
 
 
 @app_commands.guild_only()
@@ -17,11 +20,16 @@ class LocalConfigCog(GHUtilsCog, GroupCog, group_name="gh_config_local"):
         action: ConfigAction,
         value: RepositoryParam | None = None,
     ):
-        # TODO: function-ize
-        match action:
-            case ConfigAction.get:
-                await interaction.response.send_message("get")
-            case ConfigAction.set:
-                await interaction.response.send_message("set")
-            case ConfigAction.reset:
-                await interaction.response.send_message("reset")
+        def accessor(config: UserGuildConfig) -> Accessor[Repository | None]:
+            config.default_repo = yield config.default_repo
+
+        assert interaction.guild
+        await action.apply(
+            interaction,
+            value,
+            get_user_guild_config,
+            accessor,
+            name="default_repo",
+            default=None,
+            scope_msg=f"in **{interaction.guild.name}** for your account",
+        )
