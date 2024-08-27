@@ -6,7 +6,7 @@ from ghutils.utils.discord.config import ConfigAction
 from ghutils.utils.discord.transformers import RepositoryParam
 
 
-class GlobalConfigCog(GHUtilsCog, GroupCog, group_name="gh-config-global"):
+class GlobalConfigCog(GHUtilsCog, GroupCog, group_name="gh_config_global"):
     """Configure settings globally for your account."""
 
     @app_commands.command()
