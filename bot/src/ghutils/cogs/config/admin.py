@@ -6,7 +6,6 @@ from ghutils.utils.discord.config import ConfigAction
 from ghutils.utils.discord.transformers import RepositoryParam
 
 
-@app_commands.guild_install()
 @app_commands.guild_only()
 @app_commands.default_permissions(manage_guild=True)
 class AdminConfigCog(GHUtilsCog, GroupCog, group_name="gh-config-admin"):

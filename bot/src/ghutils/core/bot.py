@@ -8,6 +8,7 @@ from discord import (
     Intents,
     Interaction,
 )
+from discord.app_commands import AppCommandContext, AppInstallationType
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, NoEntryPointError
 from githubkit import GitHub
@@ -39,6 +40,10 @@ class GHUtilsBot(Bot):
             command_prefix=commands.when_mentioned,
             intents=Intents.default(),
             activity=self._get_activity(self.env),
+            allowed_installs=AppInstallationType(guild=True, user=True),
+            allowed_contexts=AppCommandContext(
+                guild=True, dm_channel=True, private_channel=True
+            ),
         )
         self.engine = create_engine(self.env.db_url)
 

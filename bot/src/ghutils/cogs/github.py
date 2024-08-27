@@ -25,8 +25,6 @@ from ghutils.utils.github import Repository
 logger = logging.getLogger(__name__)
 
 
-@app_commands.allowed_installs(guilds=True, users=True)
-@app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
     """GitHub-related commands."""
 

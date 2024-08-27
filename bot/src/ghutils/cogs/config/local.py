@@ -6,7 +6,6 @@ from ghutils.utils.discord.config import ConfigAction
 from ghutils.utils.discord.transformers import RepositoryParam
 
 
-@app_commands.allowed_installs(guilds=True, users=True)
 @app_commands.guild_only()
 class LocalConfigCog(GHUtilsCog, GroupCog, group_name="gh-config-local"):
     """Configure settings for your account in this server."""

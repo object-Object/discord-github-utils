@@ -6,8 +6,6 @@ from ghutils.utils.discord.config import ConfigAction
 from ghutils.utils.discord.transformers import RepositoryParam
 
 
-@app_commands.allowed_installs(guilds=True, users=True)
-@app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 class GlobalConfigCog(GHUtilsCog, GroupCog, group_name="gh-config-global"):
     """Configure settings globally for your account."""
 
