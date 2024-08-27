@@ -18,6 +18,7 @@
     "python.analysis.packageIndexDepths": [
         { "name": "pydantic", "depth": 2 },
         { "name": "discord", "depth": 3 },
+        { "name": "sqlalchemy", "depth": 2 },
     ],
     "sqltools.useNodeRuntime": true,
     "sqltools.connections": [
