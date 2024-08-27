@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from typing import Literal
 
 from discord import Interaction, app_commands
@@ -71,24 +72,32 @@ class UserConfigCog(GHUtilsCog, GroupCog, group_name="gh_config"):
             interaction: Interaction,
             value: RepositoryParam,
         ):
-            with self.bot.db_session() as session:
-                config = _get_config(session, interaction)
+            with self._update_config(interaction) as config:
                 old_value = config.default_repo
                 config.default_repo = value
+            await _send_updated(interaction, "default_repo", old_value, value)
+
+        @contextmanager
+        def _update_config(self, interaction: Interaction):
+            with self.bot.db_session() as session:
+                config = _get_config(session, interaction)
+                yield config
                 session.add(config)
                 session.commit()
 
-                if interaction.guild:
-                    scope = f"**{interaction.guild.name}**"
-                else:
-                    scope = "DMs"
 
-                if old_value:
-                    message = f"✅ Changed **default_repo** from `{old_value}` to `{value}` in {scope} for your account."
-                else:
-                    message = f"✅ Set **default_repo** to `{value}` in {scope} for your account."
+async def _send_updated[T](interaction: Interaction, name: str, old: T | None, new: T):
+    if interaction.guild:
+        scope = f"**{interaction.guild.name}**"
+    else:
+        scope = "DMs"
 
-                await interaction.response.send_message(message, ephemeral=True)
+    if old:
+        message = f"✅ Changed **{name}** from `{old}` to `{new}` in {scope} for your account."
+    else:
+        message = f"✅ Set **{name}** to `{new}` in {scope} for your account."
+
+    await interaction.response.send_message(message, ephemeral=True)
 
 
 def _get_config(session: Session, interaction: Interaction):
