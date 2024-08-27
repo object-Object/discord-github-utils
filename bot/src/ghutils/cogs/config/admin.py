@@ -10,6 +10,8 @@ from ghutils.utils.discord.transformers import RepositoryParam
 @app_commands.guild_only()
 @app_commands.default_permissions(manage_guild=True)
 class AdminConfigCog(GHUtilsCog, GroupCog, group_name="gh-config-admin"):
+    """Configure settings for everyone who uses the bot in this server."""
+
     @app_commands.command()
     async def default_repo(
         self,

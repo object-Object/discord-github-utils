@@ -8,7 +8,9 @@ from ghutils.utils.discord.transformers import RepositoryParam
 
 @app_commands.allowed_installs(guilds=True, users=True)
 @app_commands.guild_only()
-class GuildConfigCog(GHUtilsCog, GroupCog, group_name="gh-config-guild"):
+class LocalConfigCog(GHUtilsCog, GroupCog, group_name="gh-config-local"):
+    """Configure settings for your account in this server."""
+
     @app_commands.command()
     async def default_repo(
         self,
