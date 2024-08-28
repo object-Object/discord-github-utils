@@ -79,15 +79,8 @@ class ReferenceTransformer[T](Transformer, ABC):
         value: str,
     ) -> list[Choice[str]]:
         async with GHUtilsBot.github_app_of(interaction) as (github, state):
-            match state:
-                case LoginState.LOGGED_IN:
-                    error = None
-                case LoginState.LOGGED_OUT:
-                    error = "⚠️ Log in with `/gh login` to enable autocomplete."
-                case LoginState.EXPIRED:
-                    error = "⚠️ Session expired. Log back in with `/gh login` to reenable autocomplete."
-            if error:
-                return [Choice(name=error, value=value)]
+            if state != LoginState.LOGGED_IN:
+                return []
 
             try:
                 repo, search = await self.get_repo_and_reference(interaction, value)
