@@ -3,9 +3,10 @@ from __future__ import annotations
 import logging
 import uuid
 
-from discord import Interaction, app_commands
+from discord import Color, Embed, Interaction, app_commands
 from discord.ext.commands import GroupCog
 from discord.ui import Button, View
+from githubkit.rest import Issue
 
 from ghutils.core.cog import GHUtilsCog
 from ghutils.db.models import (
@@ -17,6 +18,7 @@ from ghutils.utils.discord.references import (
     IssueReference,
     PRReference,
 )
+from ghutils.utils.strings import truncate_str
 
 logger = logging.getLogger(__name__)
 
@@ -27,24 +29,88 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
     # /gh
 
     @app_commands.command()
-    async def issue(self, interaction: Interaction, issue: IssueReference):
+    @app_commands.rename(reference="issue")
+    async def issue(
+        self,
+        interaction: Interaction,
+        reference: IssueReference,
+        ephemeral: bool = True,
+    ):
         """Get a link to a GitHub issue."""
 
-        await interaction.response.send_message(
-            f"[#{issue.number}](<{issue.html_url}>): {issue.title}"
+        repo, issue = reference
+
+        if issue.body:
+            description = truncate_str(issue.body, limit=200, message="...")
+        else:
+            description = None
+
+        match issue:
+            case Issue(state="closed", state_reason="not_planned"):
+                color = "rgb(145, 152, 161)"
+            case Issue(state="closed"):
+                color = "rgb(171, 125, 248)"
+            case _:  # open
+                color = "rgb(63, 185, 80)"
+
+        embed = (
+            Embed(
+                title=f"#{issue.number}: {issue.title}",
+                url=issue.html_url,
+                description=description,
+                color=Color.from_str(color),
+            )
+            .set_footer(
+                text=f"{repo}#{issue.number}",
+            )
+            .add_field(
+                name="Opened",
+                value=f"<t:{int(issue.created_at.timestamp())}:f>",
+            )
         )
 
+        if issue.closed_at:
+            embed.add_field(
+                name="Closed",
+                value=f"<t:{int(issue.closed_at.timestamp())}:f>",
+            )
+
+        if user := issue.user:
+            embed.set_author(
+                name=user.login,
+                url=user.html_url,
+                icon_url=user.avatar_url,
+            )
+
+        await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
+
     @app_commands.command()
-    async def pr(self, interaction: Interaction, pr: PRReference):
+    @app_commands.rename(reference="pr")
+    async def pr(
+        self,
+        interaction: Interaction,
+        reference: PRReference,
+        ephemeral: bool = True,
+    ):
         """Get a link to a GitHub pull request."""
+
+        repo, pr = reference
 
         await interaction.response.send_message(
             f"[#{pr.number}](<{pr.html_url}>): {pr.title}"
         )
 
     @app_commands.command()
-    async def commit(self, interaction: Interaction, commit: CommitReference):
+    @app_commands.rename(reference="commit")
+    async def commit(
+        self,
+        interaction: Interaction,
+        reference: CommitReference,
+        ephemeral: bool = True,
+    ):
         """Get a link to a GitHub commit."""
+
+        repo, commit = reference
 
         await interaction.response.send_message(
             f"[{commit.sha[:12]}](<{commit.html_url}>): {commit.commit.message}"

@@ -54,7 +54,7 @@ class ReferenceTransformer[T](Transformer, ABC):
         self,
         interaction: Interaction,
         value: str,
-    ) -> T:
+    ) -> tuple[Repository, T]:
         repo, raw_reference = await self.get_repo_and_reference(interaction, value)
 
         match = re.match(rf"^({self.reference_pattern})", raw_reference)
@@ -63,7 +63,7 @@ class ReferenceTransformer[T](Transformer, ABC):
 
         async with GHUtilsBot.github_app_of(interaction) as (github, _):
             try:
-                return await self.resolve_reference(github, repo, match[1])
+                return repo, await self.resolve_reference(github, repo, match[1])
             except GitHubException as e:
                 match e:
                     case RequestFailed(response=Response(status_code=404)):
@@ -247,8 +247,8 @@ class CommitReferenceTransformer(ReferenceTransformer[Commit]):
         ]
 
 
-IssueReference = Transform[Issue, IssueReferenceTransformer]
+IssueReference = Transform[tuple[Repository, Issue], IssueReferenceTransformer]
 
-PRReference = Transform[PullRequest, PRReferenceTransformer]
+PRReference = Transform[tuple[Repository, PullRequest], PRReferenceTransformer]
 
-CommitReference = Transform[Commit, CommitReferenceTransformer]
+CommitReference = Transform[tuple[Repository, Commit], CommitReferenceTransformer]
