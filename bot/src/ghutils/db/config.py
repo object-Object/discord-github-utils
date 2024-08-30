@@ -6,6 +6,8 @@ from typing import Callable, cast, overload
 from discord import Interaction
 from sqlmodel import Session
 
+from ghutils.utils.github import Repository
+
 from .models import GuildConfig, UserConfig, UserGuildConfig
 
 
@@ -13,11 +15,19 @@ from .models import GuildConfig, UserConfig, UserGuildConfig
 class GlobalConfigs:
     user: UserConfig
 
+    @property
+    def default_repo(self) -> Repository | None:
+        return self.user.default_repo
+
 
 @dataclass
 class GuildConfigs(GlobalConfigs):
     user_guild: UserGuildConfig
     guild: GuildConfig
+
+    @property
+    def default_repo(self) -> Repository | None:
+        return self.user_guild.default_repo or self.guild.default_repo
 
 
 @overload
@@ -89,6 +99,5 @@ def _get_or_create[**P, T](
     *args: P.args,
     **kwargs: P.kwargs,
 ) -> T:
-    assert isinstance(model_type, type)
-    model_type = cast(type[T], model_type)
-    return session.get(model_type, kwargs) or model_type(*args, **kwargs)
+    model_cls = cast(type[T], model_type)
+    return session.get(model_cls, kwargs) or model_cls(*args, **kwargs)
