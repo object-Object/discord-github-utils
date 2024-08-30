@@ -20,6 +20,7 @@ from ghutils.db.models import UserGitHubTokens
 from ghutils.utils.imports import iter_modules
 
 from .env import GHUtilsEnv
+from .tree import GHUtilsCommandTree
 from .types import LoginState
 
 logger = logging.getLogger(__name__)
@@ -44,6 +45,7 @@ class GHUtilsBot(Bot):
             allowed_contexts=AppCommandContext(
                 guild=True, dm_channel=True, private_channel=True
             ),
+            tree_cls=GHUtilsCommandTree,
         )
         self.engine = create_engine(self.env.db_url)
 
