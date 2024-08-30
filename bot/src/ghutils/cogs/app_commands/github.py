@@ -2,14 +2,12 @@ from __future__ import annotations
 
 import logging
 import uuid
-from typing import Any
 
 from discord import Interaction, app_commands
 from discord.ext.commands import GroupCog
 from discord.ui import Button, View
-from githubkit import GitHub
 
-from ghutils.core.cog import GHUtilsCog, SubGroup
+from ghutils.core.cog import GHUtilsCog
 from ghutils.db.models import (
     UserGitHubTokens,
     UserLogin,
@@ -19,8 +17,6 @@ from ghutils.utils.discord.references import (
     IssueReference,
     PRReference,
 )
-from ghutils.utils.discord.transformers import RepositoryParam
-from ghutils.utils.github import Repository
 
 logger = logging.getLogger(__name__)
 
@@ -98,40 +94,3 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
                     "❌ Already logged out.",
                     ephemeral=True,
                 )
-
-    class List(SubGroup):
-        """List values from GitHub."""
-
-        @app_commands.command()
-        async def issues(
-            self,
-            interaction: Interaction,
-            repo: RepositoryParam,
-        ):
-            async with self.bot.github_app(interaction) as (github, _):
-                issues = [issue async for issue in _list_issues(github, repo, limit=10)]
-
-                await interaction.response.send_message(
-                    "\n".join(f"- {issue.title}" for issue in issues)
-                )
-
-
-async def _list_issues(
-    github: GitHub[Any],
-    repo: Repository,
-    *,
-    limit: int | None = None,
-):
-    n = 0
-    async for issue in github.paginate(
-        github.rest.issues.async_list_for_repo,
-        owner=repo.owner,
-        repo=repo.repo,
-        state="open",
-    ):
-        if issue.pull_request:
-            continue
-        yield issue
-        n += 1
-        if limit and n >= limit:
-            break
