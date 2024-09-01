@@ -1,7 +1,10 @@
 from contextlib import asynccontextmanager
 from typing import Any, Callable
 
-from discord import Interaction, InteractionType
+from discord import (
+    Interaction,
+    InteractionType,
+)
 from discord.app_commands import Command
 from discord.ext.commands import Paginator
 

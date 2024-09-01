@@ -18,6 +18,7 @@ from ghutils.utils.discord.references import (
     IssueReference,
     PRReference,
 )
+from ghutils.utils.discord.visibility import MessageVisibility, respond_with_visibility
 from ghutils.utils.strings import truncate_str
 
 logger = logging.getLogger(__name__)
@@ -34,16 +35,11 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
         self,
         interaction: Interaction,
         reference: IssueReference,
-        ephemeral: bool = True,
+        visibility: MessageVisibility = "private",
     ):
         """Get a link to a GitHub issue."""
 
         repo, issue = reference
-
-        if issue.body:
-            description = truncate_str(issue.body, limit=200, message="...")
-        else:
-            description = None
 
         match issue:
             case Issue(state="closed", state_reason="not_planned"):
@@ -53,36 +49,26 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
             case _:  # open
                 color = "rgb(63, 185, 80)"
 
-        embed = (
-            Embed(
-                title=f"#{issue.number}: {issue.title}",
-                url=issue.html_url,
-                description=description,
-                color=Color.from_str(color),
-            )
-            .set_footer(
-                text=f"{repo}#{issue.number}",
-            )
-            .add_field(
-                name="Opened",
-                value=f"<t:{int(issue.created_at.timestamp())}:f>",
-            )
+        embed = Embed(
+            title=f"#{issue.number}: {issue.title}",
+            url=issue.html_url,
+            color=Color.from_str(color),
+            timestamp=issue.created_at,
+        ).set_footer(
+            text=f"{repo}#{issue.number}",
         )
 
-        if issue.closed_at:
-            embed.add_field(
-                name="Closed",
-                value=f"<t:{int(issue.closed_at.timestamp())}:f>",
-            )
+        if issue.body:
+            embed.description = truncate_str(issue.body, limit=200, message="...")
 
-        if user := issue.user:
+        if issue.user:
             embed.set_author(
-                name=user.login,
-                url=user.html_url,
-                icon_url=user.avatar_url,
+                name=issue.user.login,
+                url=issue.user.html_url,
+                icon_url=issue.user.avatar_url,
             )
 
-        await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
+        await respond_with_visibility(interaction, visibility, embed=embed)
 
     @app_commands.command()
     @app_commands.rename(reference="pr")
@@ -94,7 +80,7 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
     ):
         """Get a link to a GitHub pull request."""
 
-        repo, pr = reference
+        _, pr = reference
 
         await interaction.response.send_message(
             f"[#{pr.number}](<{pr.html_url}>): {pr.title}"
@@ -110,7 +96,7 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
     ):
         """Get a link to a GitHub commit."""
 
-        repo, commit = reference
+        _, commit = reference
 
         await interaction.response.send_message(
             f"[{commit.sha[:12]}](<{commit.html_url}>): {commit.commit.message}"

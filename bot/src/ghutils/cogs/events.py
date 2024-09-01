@@ -5,6 +5,7 @@ from discord.ext.commands import Cog
 
 from ghutils.core.cog import GHUtilsCog
 from ghutils.utils.discord.commands import get_command, print_command
+from ghutils.utils.discord.visibility import DeleteButton
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +16,7 @@ class EventsCog(GHUtilsCog):
     @Cog.listener()
     async def on_ready(self):
         logger.info(f"Logged in as {self.bot.user}")
+        self.bot.add_dynamic_items(DeleteButton)
 
     @Cog.listener()
     async def on_interaction(self, interaction: Interaction):
