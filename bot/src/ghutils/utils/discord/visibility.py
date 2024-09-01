@@ -115,13 +115,12 @@ class DeleteButton(
     ):
         return cls(user_id=int(match["id"]))
 
-    async def interaction_check(self, interaction: Interaction):
-        return (
+    async def callback(self, interaction: Interaction):
+        if (
             interaction.user.id == self.user_id
             and interaction.message is not None
             and interaction.message.author == interaction.client.user
-        )
-
-    async def callback(self, interaction: Interaction):
-        assert interaction.message
-        await interaction.message.delete()
+        ):
+            await interaction.message.delete()
+        else:
+            await interaction.response.defer()
