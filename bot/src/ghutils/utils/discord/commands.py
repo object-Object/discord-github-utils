@@ -29,7 +29,7 @@ def print_command(
 ) -> str:
     limit = 100 if truncate else None
     args = " ".join(
-        f"{name}: {truncate_str(str(value), limit)}"
+        f"{name}: {truncate_str(str(value), limit, message=" ... (truncated)")}"
         for name, value in interaction.namespace
     )
     return f"/{command.qualified_name} {args}"

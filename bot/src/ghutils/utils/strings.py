@@ -1,4 +1,4 @@
-def truncate_str(text: str, limit: int | None, message: str = " ... (truncated)"):
+def truncate_str(text: str, limit: int | None, message: str = "..."):
     if limit is None:
         return text
 

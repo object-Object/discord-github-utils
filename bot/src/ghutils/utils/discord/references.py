@@ -15,7 +15,7 @@ from ghutils.core.bot import GHUtilsBot
 from ghutils.core.types import LoginState
 from ghutils.db.config import get_configs
 
-from ..github import Repository, gh_request
+from ..github import Repository, gh_request, short_sha
 from ..strings import truncate_str
 
 logger = logging.getLogger(__name__)
@@ -131,11 +131,7 @@ class ReferenceTransformer[T](Transformer, ABC):
         description: str,
     ) -> Choice[str]:
         value = f"{repo}{self.separator}{reference}"
-        name = truncate_str(
-            f"{value}: {description}",
-            limit=100,
-            message="...",
-        )
+        name = truncate_str(f"{value}: {description}", 100)
         return Choice(name=name, value=value)
 
 
@@ -242,7 +238,7 @@ class CommitReferenceTransformer(ReferenceTransformer[Commit]):
             )
         )
         return [
-            (result.sha[:12], result.commit.message.split("\n")[0])
+            (short_sha(result.sha), result.commit.message.split("\n")[0])
             for result in results.items
         ]
 
