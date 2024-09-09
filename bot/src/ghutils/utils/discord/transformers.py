@@ -24,4 +24,4 @@ class RepositoryTransformer(Transformer):
             return Repository(owner=user.login, repo=value)
 
 
-RepositoryParam = Transform[Repository, RepositoryTransformer]
+RepositoryOption = Transform[Repository, RepositoryTransformer]
