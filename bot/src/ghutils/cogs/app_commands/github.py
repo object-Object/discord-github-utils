@@ -3,10 +3,12 @@ from __future__ import annotations
 import logging
 import uuid
 from datetime import datetime
+from typing import Any
 
 from discord import Embed, Interaction, app_commands
 from discord.ext.commands import GroupCog
 from discord.ui import Button, View
+from githubkit import GitHub
 from githubkit.exception import GitHubException
 from githubkit.rest import Issue, PullRequest, SimpleUser
 
@@ -23,12 +25,13 @@ from ghutils.utils.discord.references import (
 )
 from ghutils.utils.discord.visibility import MessageVisibility, respond_with_visibility
 from ghutils.utils.github import (
-    CommitStatusState,
+    CommitCheckState,
     IssueState,
     PullRequestState,
     Repository,
+    SmartPaginator,
     gh_request,
-    short_sha,
+    shorten_sha,
 )
 from ghutils.utils.strings import truncate_str
 
@@ -84,27 +87,10 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
 
         repo, commit = reference
 
-        # TODO: this doesn't include Actions????????
         async with self.bot.github_app(interaction) as (github, _):
-            try:
-                status = await gh_request(
-                    github.rest.repos.async_get_combined_status_for_ref(
-                        owner=repo.owner,
-                        repo=repo.repo,
-                        ref=commit.sha,
-                    )
-                )
-                match status.state:
-                    case "success":
-                        state = CommitStatusState.SUCCESS
-                    case "failure":
-                        state = CommitStatusState.FAILURE
-                    case _:
-                        state = CommitStatusState.PENDING
-            except GitHubException:
-                state = CommitStatusState.PENDING
+            state = await _get_commit_check_state(github, repo, commit.sha)
 
-        sha = short_sha(commit.sha)
+        short_sha = shorten_sha(commit.sha)
 
         message = commit.commit.message
         description = None
@@ -113,12 +99,12 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
             description = truncate_str(description.strip(), 200)
 
         embed = Embed(
-            title=truncate_str(f"Commit {sha}: {message}", 256),
+            title=truncate_str(f"[Commit {short_sha}] {message}", 256),
             description=description,
             url=commit.html_url,
             color=state.color,
         ).set_footer(
-            text=f"{repo}@{sha}",
+            text=f"{repo}@{short_sha}",
         )
 
         if (author := commit.commit.author) and author.date:
@@ -188,7 +174,7 @@ def _create_issue_embed(repo: Repository, issue: Issue | PullRequest):
             state = PullRequestState.of(issue)
 
     embed = Embed(
-        title=truncate_str(f"{issue_type} #{issue.number}: {issue.title}", 256),
+        title=truncate_str(f"[{issue_type} #{issue.number}] {issue.title}", 256),
         url=issue.html_url,
         timestamp=issue.created_at,
         color=state.color,
@@ -203,3 +189,59 @@ def _create_issue_embed(repo: Repository, issue: Issue | PullRequest):
         set_embed_author(embed, issue.user)
 
     return embed
+
+
+# we need to look at both checks and commit statuses
+# https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/collaborating-on-repositories-with-code-quality-features/about-status-checks#types-of-status-checks-on-github
+# if anything failed, return FAILURE
+# otherwise if anything succeeded, return SUCCESS
+# otherwise return PENDING
+async def _get_commit_check_state(
+    github: GitHub[Any],
+    repo: Repository,
+    sha: str,
+) -> CommitCheckState:
+    state = CommitCheckState.PENDING
+
+    # commit statuses (easy!)
+    try:
+        combined_status = await gh_request(
+            github.rest.repos.async_get_combined_status_for_ref(
+                owner=repo.owner,
+                repo=repo.repo,
+                ref=sha,
+            )
+        )
+        match combined_status.state:
+            case "success":
+                state = CommitCheckState.SUCCESS
+            case "failure":
+                return CommitCheckState.FAILURE
+            case _:
+                pass
+    except GitHubException:
+        pass
+
+    # checks (less easy.)
+    try:
+        async for suite in SmartPaginator(
+            github.rest.checks.async_list_suites_for_ref,
+            owner=repo.owner,
+            repo=repo.repo,
+            ref=sha,
+            map_func=lambda resp: resp.parsed_data.check_suites,
+            limit_func=lambda resp: resp.parsed_data.total_count,
+        ):
+            if suite.status != "completed":
+                continue
+            match suite.conclusion:
+                case "success":
+                    state = CommitCheckState.SUCCESS
+                case "failure" | "timed_out" | "startup_failure":
+                    return CommitCheckState.FAILURE
+                case _:
+                    pass
+    except GitHubException:
+        pass
+
+    return state

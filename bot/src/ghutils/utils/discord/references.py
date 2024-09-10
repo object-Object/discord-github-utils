@@ -15,7 +15,7 @@ from ghutils.core.bot import GHUtilsBot
 from ghutils.core.types import LoginState
 from ghutils.db.config import get_configs
 
-from ..github import Repository, gh_request, short_sha
+from ..github import Repository, gh_request, shorten_sha
 from ..strings import truncate_str
 
 logger = logging.getLogger(__name__)
@@ -238,7 +238,7 @@ class CommitReferenceTransformer(ReferenceTransformer[Commit]):
             )
         )
         return [
-            (short_sha(result.sha), result.commit.message.split("\n")[0])
+            (shorten_sha(result.sha), result.commit.message.split("\n")[0])
             for result in results.items
         ]
 
