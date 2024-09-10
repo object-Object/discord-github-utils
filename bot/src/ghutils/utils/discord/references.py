@@ -231,6 +231,10 @@ class CommitReferenceTransformer(ReferenceTransformer[Commit]):
         repo: Repository,
         search: str,
     ) -> list[tuple[str | int, str]]:
+        # commit search returns no results for an empty search, so don't bother trying
+        if not search.strip():
+            return []
+
         results = await gh_request(
             github.rest.search.async_commits(
                 f"{search} repo:{repo}",
