@@ -71,6 +71,7 @@ class CommitCheckState(Enum):
     SUCCESS = auto()
     FAILURE = auto()
     PENDING = auto()
+    NEUTRAL = auto()
 
     @cached_property
     def color(self):
@@ -80,6 +81,8 @@ class CommitCheckState(Enum):
             case CommitCheckState.FAILURE:
                 return Color.from_rgb(218, 54, 51)
             case CommitCheckState.PENDING:
+                return Color.from_rgb(158, 106, 3)
+            case CommitCheckState.NEUTRAL:
                 return None
 
 

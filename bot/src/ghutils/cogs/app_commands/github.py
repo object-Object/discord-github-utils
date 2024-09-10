@@ -193,17 +193,52 @@ def _create_issue_embed(repo: Repository, issue: Issue | PullRequest):
 
 # we need to look at both checks and commit statuses
 # https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/collaborating-on-repositories-with-code-quality-features/about-status-checks#types-of-status-checks-on-github
-# if anything failed, return FAILURE
-# otherwise if anything succeeded, return SUCCESS
-# otherwise return PENDING
+# if anything is in progress, return PENDING
+# else if anything failed, return FAILURE
+# else if anything succeeded, return SUCCESS
+# else return PENDING
 async def _get_commit_check_state(
     github: GitHub[Any],
     repo: Repository,
     sha: str,
 ) -> CommitCheckState:
-    state = CommitCheckState.PENDING
+    state = CommitCheckState.NEUTRAL
 
-    # commit statuses (easy!)
+    # checks
+    try:
+        async for suite in SmartPaginator(
+            github.rest.checks.async_list_suites_for_ref,
+            owner=repo.owner,
+            repo=repo.repo,
+            ref=sha,
+            map_func=lambda resp: resp.parsed_data.check_suites,
+            limit_func=lambda resp: resp.parsed_data.total_count,
+        ):
+            match suite.status:
+                case "queued":
+                    # this is the default status
+                    # it seems to show up for suites that aren't actually in the UI
+                    # so just ignore it
+                    pass
+                case "completed":
+                    match suite.conclusion:
+                        case "success":
+                            if state is not CommitCheckState.FAILURE:
+                                state = CommitCheckState.SUCCESS
+                        case "failure" | "timed_out" | "startup_failure":
+                            state = CommitCheckState.FAILURE
+                        case _:
+                            pass
+                case _:
+                    return CommitCheckState.PENDING
+    except GitHubException:
+        pass
+
+    if state is CommitCheckState.FAILURE:
+        return state
+
+    # commit statuses
+    # if we get to this point, either all checks passed or there are no checks
     try:
         combined_status = await gh_request(
             github.rest.repos.async_get_combined_status_for_ref(
@@ -214,33 +249,11 @@ async def _get_commit_check_state(
         )
         match combined_status.state:
             case "success":
-                state = CommitCheckState.SUCCESS
+                return CommitCheckState.SUCCESS
             case "failure":
                 return CommitCheckState.FAILURE
             case _:
                 pass
-    except GitHubException:
-        pass
-
-    # checks (less easy.)
-    try:
-        async for suite in SmartPaginator(
-            github.rest.checks.async_list_suites_for_ref,
-            owner=repo.owner,
-            repo=repo.repo,
-            ref=sha,
-            map_func=lambda resp: resp.parsed_data.check_suites,
-            limit_func=lambda resp: resp.parsed_data.total_count,
-        ):
-            if suite.status != "completed":
-                continue
-            match suite.conclusion:
-                case "success":
-                    state = CommitCheckState.SUCCESS
-                case "failure" | "timed_out" | "startup_failure":
-                    return CommitCheckState.FAILURE
-                case _:
-                    pass
     except GitHubException:
         pass
 
