@@ -99,7 +99,7 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
             description = truncate_str(description.strip(), 200)
 
         embed = Embed(
-            title=truncate_str(f"[Commit {short_sha}] {message}", 256),
+            title=truncate_str(f"[{short_sha}] {message}", 256),
             description=description,
             url=commit.html_url,
             color=state.color,
