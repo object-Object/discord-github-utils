@@ -16,4 +16,8 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    # catch KeyboardInterrupt to hide the long unnecessary traceback
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        pass

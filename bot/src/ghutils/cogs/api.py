@@ -1,48 +1,53 @@
+from __future__ import annotations
+
 import logging
-from contextlib import asynccontextmanager
+from dataclasses import dataclass, field
 from typing import Annotated
 
-import uvicorn
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.responses import HTMLResponse
 from githubkit import GitHub
 from pydantic import ValidationError
-from sqlalchemy import Engine
-from sqlmodel import Session, create_engine
+from sqlmodel import Session
+from uvicorn import Config, Server
 
+from ghutils.core.bot import GHUtilsBot
+from ghutils.core.cog import GHUtilsCog
 from ghutils.core.env import GHUtilsEnv
-from ghutils.db.engine import check_db_connection
 from ghutils.db.models import UserGitHubTokens, UserLogin
 
 logger = logging.getLogger(__name__)
 
-engine: Engine
+
+app = FastAPI()
 
 
-def get_session():
-    with Session(engine, expire_on_commit=False) as session:
+def get_bot():
+    bot = app.state.bot
+    assert isinstance(bot, GHUtilsBot), f"Invalid state.bot, expected GHUtilsBot: {bot}"
+    return bot
+
+
+def get_env(bot: BotDependency):
+    return bot.env
+
+
+def get_session(bot: BotDependency):
+    with bot.db_session() as session:
         yield session
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    global engine
-    engine = create_engine(GHUtilsEnv.get().db_url)
-    check_db_connection(engine)
-    yield
-
-
-app = FastAPI(
-    lifespan=lifespan,
-)
+BotDependency = Annotated[GHUtilsBot, Depends(get_bot)]
+EnvDependency = Annotated[GHUtilsEnv, Depends(get_env)]
+SessionDependency = Annotated[Session, Depends(get_session)]
 
 
 @app.get("/login")
 async def get_login(
     code: str,
     state: str,
-    session: Annotated[Session, Depends(get_session)],
-    env: Annotated[GHUtilsEnv, Depends(GHUtilsEnv.get)],
+    env: EnvDependency,
+    session: SessionDependency,
 ):
     # parse state to UserLogin
     try:
@@ -80,9 +85,22 @@ async def get_login(
     return HTMLResponse("Yay!")  # FIXME: make a real success page or something
 
 
-if __name__ == "__main__":
-    uvicorn.run(
-        app,
-        host="0.0.0.0",
-        port=GHUtilsEnv.get().api_port,
-    )
+@dataclass
+class APICog(GHUtilsCog):
+    server: Server | None = field(default=None, init=False)
+
+    async def cog_load(self):
+        app.state.bot = self.bot
+        self.server = Server(
+            Config(
+                app,
+                host="0.0.0.0",
+                port=self.env.api_port,
+            )
+        )
+        self.bot.loop.create_task(self.server.serve())
+
+    async def cog_unload(self):
+        if self.server:
+            await self.server.shutdown()
+            self.server = None

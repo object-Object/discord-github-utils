@@ -6,12 +6,6 @@ services:
     environment:
       ENVIRONMENT: prod
 
-  api:
-    restart: unless-stopped
-    image: "ghcr.io/object-object/discord-github-utils@${IMAGE_ID}"
-    environment:
-      ENVIRONMENT: prod
-
   postgres:
     restart: unless-stopped
 

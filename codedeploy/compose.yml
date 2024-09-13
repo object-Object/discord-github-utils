@@ -7,9 +7,11 @@ services:
         target: /app/.env
       - source: github_private_key
         target: /app/secrets/github__private_key
+    ports:
+      - 7100:7100
     environment:
-      MODULE: ghutils.app
       DB_URL: postgresql://postgres:postgres@postgres/postgres # postgres
+      API_PORT: 7100
       HEALTH_CHECK_DISPLAY_NAME: Docker
       HEALTH_CHECK_PORT: 40404
       HEALTH_CHECK_STARTUP_DELAY: 0
@@ -18,23 +20,6 @@ services:
       HEALTH_CHECK_INTERVAL: 0
     depends_on:
       - postgres
-
-  api:
-    stop_signal: SIGINT
-    secrets:
-      - source: env
-        target: /app/.env
-      - source: github_private_key
-        target: /app/secrets/github__private_key
-    ports:
-      - 7100:7100
-    environment:
-      MODULE: ghutils.api.app
-      API_PORT: 7100
-      DB_URL: postgresql://postgres:postgres@postgres/postgres
-    depends_on:
-      - postgres
-      - bot
 
   postgres:
     image: postgres:15

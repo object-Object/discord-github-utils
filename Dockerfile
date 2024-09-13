@@ -27,4 +27,4 @@ COPY common/ common/
 COPY bot/ bot/
 
 # NOTE: this must be a list, otherwise signals (eg. SIGINT) are not forwarded to the bot
-CMD ["/bin/bash", "-c", "python -m $MODULE"]
+CMD ["/bin/bash", "-c", "python -m ghutils.app"]
