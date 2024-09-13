@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum, auto
 from functools import cached_property
-from typing import Any, Awaitable, Callable, List
+from typing import Any, Awaitable, Callable, List, cast
 
 from discord import Color
 from githubkit import Paginator, Response
@@ -144,11 +144,14 @@ class SmartPaginator[RT](Paginator[RT]):
             return []
 
         self._prev_pages_data_count += len(self._cached_data)
-        response: Response[Any] = await self.request(
-            *self.args,
-            **self.kwargs,
-            page=self._current_page,  # type: ignore
-            per_page=self._per_page,
+        response = cast(
+            Response[Any],
+            await self.request(
+                *self.args,
+                **self.kwargs,
+                page=self._current_page,  # type: ignore
+                per_page=self._per_page,  # type: ignore
+            ),
         )
         self._cached_data = self.map_func(response)
         self._limit = self.limit_func(response)
