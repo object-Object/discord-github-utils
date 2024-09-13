@@ -7,7 +7,7 @@
 #   all-features: false
 #   with-sources: false
 #   generate-hashes: false
-#   universal: false
+#   universal: true
 
 -e file:bot
 -e file:common
@@ -29,14 +29,14 @@ attrs==23.2.0
 certifi==2024.6.2
     # via httpcore
     # via httpx
-cffi==1.17.0
+cffi==1.17.0 ; platform_python_implementation != 'PyPy'
     # via cryptography
 cfgv==3.4.0
     # via pre-commit
 click==8.1.7
     # via typer
     # via uvicorn
-colorama==0.4.6
+colorama==0.4.6 ; sys_platform == 'win32' or platform_system == 'Windows'
     # via click
     # via uvicorn
 cryptography==43.0.0
@@ -60,7 +60,7 @@ frozenlist==1.4.1
     # via aiosignal
 githubkit==0.11.8
     # via ghutils-bot
-greenlet==3.0.3
+greenlet==3.0.3 ; (python_full_version < '3.13' and platform_machine == 'AMD64') or (python_full_version < '3.13' and platform_machine == 'WIN32') or (python_full_version < '3.13' and platform_machine == 'aarch64') or (python_full_version < '3.13' and platform_machine == 'amd64') or (python_full_version < '3.13' and platform_machine == 'ppc64le') or (python_full_version < '3.13' and platform_machine == 'win32') or (python_full_version < '3.13' and platform_machine == 'x86_64')
     # via sqlalchemy
 h11==0.14.0
     # via httpcore
@@ -102,7 +102,7 @@ platformdirs==4.2.2
 pre-commit==3.7.1
 psycopg2-binary==2.9.9
     # via ghutils-bot
-pycparser==2.22
+pycparser==2.22 ; platform_python_implementation != 'PyPy'
     # via cffi
 pydantic==2.7.4
     # via fastapi
@@ -154,6 +154,8 @@ ujson==5.10.0
     # via fastapi
 uvicorn==0.30.1
     # via fastapi
+uvloop==0.20.0 ; platform_python_implementation != 'PyPy' and sys_platform != 'cygwin' and sys_platform != 'win32'
+    # via uvicorn
 virtualenv==20.26.3
     # via pre-commit
 watchfiles==0.22.0
