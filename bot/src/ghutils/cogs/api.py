@@ -15,9 +15,12 @@ from ghutils.core.bot import GHUtilsBot
 from ghutils.core.cog import GHUtilsCog
 from ghutils.core.env import GHUtilsEnv
 from ghutils.db.models import UserGitHubTokens, UserLogin
+from ghutils.resources import load_resource
+
+SUCCESS_PAGE = load_resource("web/success.html")
+
 
 logger = logging.getLogger(__name__)
-
 
 app = FastAPI()
 
@@ -82,7 +85,7 @@ async def get_login(
     # commit the delete and insert
     session.commit()
 
-    return HTMLResponse("Yay!")  # FIXME: make a real success page or something
+    return HTMLResponse(SUCCESS_PAGE)
 
 
 @dataclass
