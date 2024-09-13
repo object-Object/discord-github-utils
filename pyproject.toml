@@ -29,6 +29,9 @@ members = [
 [tool.rye.scripts]
 bot = { call="ghutils.app" }
 api = { call="ghutils.api.app" }
+setup = { chain=["setup:sync", "setup:pre-commit"] }
+"setup:sync" = "rye sync"
+"setup:pre-commit" = "pre-commit install"
 
 # Hatch version plugin (so `hatch version` works)
 

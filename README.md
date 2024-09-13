@@ -2,11 +2,10 @@
 
 Discord bot providing useful GitHub-related commands.
 
-## Project structure
+## Setup
 
-This project is set up as a monorepo using [Rye](https://rye.astral.sh). To get started, [install Rye](https://rye.astral.sh/guide/installation), then run the following commands:
+This project is set up as a monorepo using [Rye](https://rye.astral.sh). To get started, [install Rye](https://rye.astral.sh/guide/installation), then run the following command:
 
 ```sh
-rye sync
-rye run pre-commit install
+rye run setup
 ```
