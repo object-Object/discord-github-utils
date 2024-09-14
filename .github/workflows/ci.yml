@@ -85,41 +85,11 @@ jobs:
           path: cdk.out
           retention-days: 7
 
-  build-terraform:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: eifinger/setup-rye@v4
-        with:
-          enable-cache: true
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: object-Object/ci/setup@v0
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Sync dependencies
-        run: rye sync --no-lock --no-dev
-
-      - name: Synth terraform stack
-        uses: hashicorp/terraform-cdk-action@v5
-        with:
-          mode: synth-only
-          stackName: prod
-          commentOnPr: false
-
-      - name: Upload terraform artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-build
-          path: cdktf.out
-          retention-days: 7
-
   # dummy "gate" job to restrict when the deployment jobs can run
   setup-deployments:
     needs:
       - build-image
       - build-aws-cdk
-      - build-terraform
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/') || inputs.deploy
     runs-on: ubuntu-latest
     steps:
@@ -190,38 +160,12 @@ jobs:
         id: deploy
         run: echo TODO
 
-  deploy-terraform:
-    needs:
-      - setup-deployments
-      - build-terraform
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-    environment:
-      name: terraform
-    steps:
-      - uses: actions/checkout@v4
-      - uses: object-Object/ci/setup@v0
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: terraform-build
-          path: cdktf.out
-
-      - name: Deploy stack
-        run: echo TODO
-
   deploy-codedeploy:
     needs:
       - setup-deployments
       - build-image
       - push-image
       - deploy-aws-cdk
-      - deploy-terraform
     runs-on: ubuntu-latest
     env:
       IAM_ROLE_ARN: ${{ needs.deploy-aws-cdk.outputs.iam-role-arn }}
