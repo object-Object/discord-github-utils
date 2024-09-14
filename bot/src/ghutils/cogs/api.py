@@ -22,7 +22,7 @@ SUCCESS_PAGE = load_resource("web/success.html")
 
 logger = logging.getLogger(__name__)
 
-app = FastAPI()
+app = FastAPI(root_path="/api")
 
 
 def get_bot():
