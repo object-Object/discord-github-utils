@@ -27,6 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       image-id: ${{ steps.build.outputs.imageid }}
+      image: ${{ env.REGISTRY }}/${{ github.repository }}@${{ steps.build.outputs.imageid }}
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
@@ -107,6 +108,7 @@ jobs:
       packages: write
     environment:
       name: docker
+      url: https://${{ needs.build-image.outputs.image }}
     steps:
       - uses: docker/setup-buildx-action@v3
 
@@ -187,7 +189,7 @@ jobs:
       - name: Create .env
         run: |
           cat <<END_OF_FILE > codedeploy/.env
-          IMAGE="${{ env.REGISTRY }}/${{ github.repository }}@${{ needs.build-image.outputs.image-id }}"
+          IMAGE="${{ needs.build-image.outputs.image }}"
           COMMIT="${{ github.sha }}"
           COMMIT_DATE="$(git show --no-patch --format=%ad --date=format:'%Y-%m-%d' ${{ github.sha }})"
           TOKEN="${{ secrets.DISCORD_TOKEN }}"
