@@ -16,10 +16,10 @@ env:
   NODE_VERSION: 18
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  GH_APP_ID:
-  GH_APP_CLIENT_ID:
-  GH_APP_REDIRECT_URI:
-  GH_APP_DEFAULT_INSTALLATION_ID:
+  GH_APP_ID: '997788'
+  GH_APP_CLIENT_ID: Iv23li0slKG6vf9kOBef
+  GH_APP_REDIRECT_URI: https://ghutils.object.gay/api/login
+  GH_APP_DEFAULT_INSTALLATION_ID: '54847303'
 
 jobs:
   build-image:
