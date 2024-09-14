@@ -57,8 +57,9 @@ jobs:
         with:
           name: docker-image
           path: /tmp/image.tar
+          retention-days: 7
 
-  build-infrastructure:
+  build-aws-cdk:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -77,6 +78,28 @@ jobs:
       - name: Synth aws-cdk stack
         run: cdk synth --ci --strict --no-lookups
 
+      - name: Upload aws-cdk artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: aws-cdk-build
+          path: cdk.out
+          retention-days: 7
+
+  build-terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: eifinger/setup-rye@v4
+        with:
+          enable-cache: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: object-Object/ci/setup@v0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Sync dependencies
+        run: rye sync --no-lock --no-dev
+
       - name: Synth terraform stack
         uses: hashicorp/terraform-cdk-action@v5
         with:
@@ -84,23 +107,19 @@ jobs:
           stackName: prod
           commentOnPr: false
 
-      - name: Upload aws-cdk artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: aws-cdk-build
-          path: cdk.out
-
       - name: Upload terraform artifact
         uses: actions/upload-artifact@v4
         with:
           name: terraform-build
           path: cdktf.out
+          retention-days: 7
 
   # dummy "gate" job to restrict when the deployment jobs can run
   setup-deployments:
     needs:
       - build-image
-      - build-infrastructure
+      - build-aws-cdk
+      - build-terraform
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/') || inputs.deploy
     runs-on: ubuntu-latest
     steps:
@@ -140,7 +159,7 @@ jobs:
   deploy-aws-cdk:
     needs:
       - setup-deployments
-      - build-infrastructure
+      - build-aws-cdk
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -174,7 +193,7 @@ jobs:
   deploy-terraform:
     needs:
       - setup-deployments
-      - build-infrastructure
+      - build-terraform
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -222,7 +241,7 @@ jobs:
       - name: Create .env
         run: |
           cat <<END_OF_FILE > codedeploy/.env
-          IMAGE_ID="${{ needs.build-image.outputs.image-id }}"
+          IMAGE="${{ env.REGISTRY }}/${{ github.repository }}@${{ needs.build-image.outputs.image-id }}"
           COMMIT="${{ github.sha }}"
           COMMIT_DATE="$(git show --no-patch --format=%ad --date=format:'%Y-%m-%d' ${{ github.sha }})"
           TOKEN="${{ secrets.DISCORD_TOKEN }}"

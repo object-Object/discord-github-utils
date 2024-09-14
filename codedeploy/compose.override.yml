@@ -2,7 +2,7 @@
 services:
   bot:
     restart: unless-stopped
-    image: "ghcr.io/object-object/discord-github-utils@${IMAGE_ID}"
+    image: "${IMAGE}"
     environment:
       ENVIRONMENT: prod
 
