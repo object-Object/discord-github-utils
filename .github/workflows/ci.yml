@@ -20,6 +20,7 @@ env:
   GH_APP_CLIENT_ID: Iv23li0slKG6vf9kOBef
   GH_APP_REDIRECT_URI: https://ghutils.object.gay/api/login
   GH_APP_DEFAULT_INSTALLATION_ID: '54847303'
+  CDK_DEPLOY_ROLE_ARN:
 
 jobs:
   build-image:
@@ -149,7 +150,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           npm-packages: aws-cdk
-          role-to-assume: default
+          role-to-assume: ${{ env.CDK_DEPLOY_ROLE_ARN }}
 
       - name: Download artifact
         uses: actions/download-artifact@v4
