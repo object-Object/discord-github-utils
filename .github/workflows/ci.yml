@@ -1,0 +1,250 @@
+name: Build and deploy
+
+on:
+  push:
+    branches: '*'
+    tags: 'v[0-9]+.[0-9]+.[0-9]+*'
+  pull_request:
+    branches: '*'
+  workflow_dispatch:
+    inputs:
+      deploy:
+        type: boolean
+        default: false
+
+env:
+  NODE_VERSION: 18
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  GH_APP_ID:
+  GH_APP_CLIENT_ID:
+  GH_APP_REDIRECT_URI:
+  GH_APP_DEFAULT_INSTALLATION_ID:
+
+jobs:
+  build-image:
+    runs-on: ubuntu-latest
+    outputs:
+      image-id: ${{ steps.build.outputs.imageid }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      - name: Build Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          outputs: type=docker,dest=/tmp/image.tar
+
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-image
+          path: /tmp/image.tar
+
+  build-infrastructure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: eifinger/setup-rye@v4
+        with:
+          enable-cache: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: object-Object/ci/setup@v0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          npm-packages: aws-cdk
+
+      - name: Sync dependencies
+        run: rye sync --no-lock --no-dev
+
+      - name: Synth aws-cdk stack
+        run: cdk synth --ci --strict --no-lookups
+
+      - name: Synth terraform stack
+        uses: hashicorp/terraform-cdk-action@v5
+        with:
+          mode: synth-only
+          stackName: prod
+          commentOnPr: false
+
+      - name: Upload aws-cdk artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: aws-cdk-build
+          path: cdk.out
+
+      - name: Upload terraform artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-build
+          path: cdktf.out
+
+  # dummy "gate" job to restrict when the deployment jobs can run
+  setup-deployments:
+    needs:
+      - build-image
+      - build-infrastructure
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/') || inputs.deploy
+    runs-on: ubuntu-latest
+    steps:
+      - run:
+
+  push-image:
+    needs:
+      - setup-deployments
+      - build-image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    environment:
+      name: docker
+    steps:
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download image artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-image
+          path: /tmp
+
+      - name: Load and push image
+        run: |
+          docker load --input /tmp/image.tar
+          docker image ls -a
+
+  deploy-aws-cdk:
+    needs:
+      - setup-deployments
+      - build-infrastructure
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    environment:
+      name: aws-cdk
+    outputs:
+      iam-role-arn: ${{ steps.deploy.outputs.ActionsCodeDeployRoleARN }}
+      stack-name: ${{ steps.deploy.outputs.StackName }}
+      application-name: ${{ steps.deploy.outputs.ApplicationName }}
+      deployment-group-name: ${{ steps.deploy.outputs.DeploymentGroupName }}
+      artifacts-bucket-name: ${{ steps.deploy.outputs.ArtifactsBucketName }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: object-Object/ci/setup@v0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          npm-packages: aws-cdk
+          role-to-assume: default
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: aws-cdk-build
+          path: cdk.out
+
+      - name: Deploy stack
+        id: deploy
+        run:
+
+  deploy-terraform:
+    needs:
+      - setup-deployments
+      - build-infrastructure
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    environment:
+      name: terraform
+    steps:
+      - uses: actions/checkout@v4
+      - uses: object-Object/ci/setup@v0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-build
+          path: cdktf.out
+
+      - name: Deploy stack
+        run:
+
+  deploy-codedeploy:
+    needs:
+      - setup-deployments
+      - build-image
+      - push-image
+      - deploy-aws-cdk
+      - deploy-terraform
+    runs-on: ubuntu-latest
+    env:
+      IAM_ROLE_ARN: ${{ needs.deploy-aws-cdk.outputs.iam-role-arn }}
+    permissions:
+      id-token: write
+      contents: read
+    environment:
+      name: codedeploy
+      url: ${{ steps.deploy.outputs.deployment-url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: object-Object/ci/setup@v0
+        with:
+          python-version-file: .python-version
+          role-to-assume: ${{ env.IAM_ROLE_ARN }}
+
+      - name: Create .env
+        run: |
+          cat <<END_OF_FILE > codedeploy/.env
+          IMAGE_ID="${{ needs.build-image.outputs.image-id }}"
+          COMMIT="${{ github.sha }}"
+          COMMIT_DATE="$(git show --no-patch --format=%ad --date=format:'%Y-%m-%d' ${{ github.sha }})"
+          TOKEN="${{ secrets.DISCORD_TOKEN }}"
+          GITHUB__APP_ID="${{ env.GH_APP_ID }}"
+          GITHUB__CLIENT_ID="${{ env.GH_APP_CLIENT_ID }}"
+          GITHUB__CLIENT_SECRET="${{ secrets.GH_APP_CLIENT_SECRET }}"
+          GITHUB__REDIRECT_URI="${{ env.GH_APP_REDIRECT_URI }}"
+          GITHUB__DEFAULT_INSTALLATION_ID="${{ env.GH_APP_DEFAULT_INSTALLATION_ID }}"
+          END_OF_FILE
+
+      - name: Create secrets/github__private_key
+        run: |
+          cat <<END_OF_FILE > codedeploy/secrets/github__private_key
+          ${{ secrets.GH_APP_PRIVATE_KEY }}
+          END_OF_FILE
+
+      - name: Deploy application
+        id: deploy
+        uses: object-Object/ci/deploy-codedeploy@v0
+        with:
+          path: codedeploy
+          stack: ${{ needs.deploy-aws-cdk.outputs.stack-name }}
+          application: ${{ needs.deploy-aws-cdk.outputs.application-name }}
+          deployment-group: ${{ needs.deploy-aws-cdk.outputs.deployment-group-name }}
+          s3-bucket: ${{ needs.deploy-aws-cdk.outputs.artifacts-bucket-name }}
