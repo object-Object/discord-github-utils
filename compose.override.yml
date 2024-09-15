@@ -4,6 +4,7 @@ services:
     build: .
     environment:
       ENVIRONMENT: dev
+      API_ROOT_PATH:
     develop:
       watch:
         - action: sync

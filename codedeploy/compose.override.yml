@@ -5,6 +5,7 @@ services:
     image: "${IMAGE}"
     environment:
       ENVIRONMENT: prod
+      API_ROOT_PATH: /api
 
   postgres:
     restart: unless-stopped

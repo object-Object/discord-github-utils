@@ -75,9 +75,11 @@ class GitHubSettings(BaseSettings, env_prefix="github__"):
 
 class GHUtilsEnv(BaseSettings):
     token: SecretStr
-    db_url: str = Field("")
+    db_url: str
     environment: Literal["dev", "prod"]
-    api_port: int = 5000
+
+    api_port: int
+    api_root_path: str
 
     commit: str | None = None
     commit_date: str | None = None
