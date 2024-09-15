@@ -177,7 +177,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: aws-cdk-outputs
-          path: outputs.json
 
       - name: Parse outputs
         id: parse
