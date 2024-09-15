@@ -6,14 +6,11 @@ files:
 file_exists_behavior: OVERWRITE
 hooks:
   ApplicationStop:
-    - location: hooks/application-stop.sh
+    - location: hooks/ApplicationStop.sh
       timeout: 60
   AfterInstall:
-    - location: hooks/after-install.sh
+    - location: hooks/AfterInstall.sh
       timeout: 60
   ApplicationStart:
-    - location: hooks/application-start.sh
-      timeout: 120
-  ValidateService:
-    - location: hooks/validate-service.sh
-      timeout: 240
+    - location: hooks/ApplicationStart.sh
+      timeout: 180
