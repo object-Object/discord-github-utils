@@ -14,4 +14,4 @@ secrets:
   env:
     file: .env
   github_private_key:
-    file: github__private_key
+    file: secrets/github__private_key

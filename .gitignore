@@ -3,7 +3,7 @@ db.sqlite
 *.session.sql
 *.pem
 .env*
-/secrets/
+secrets/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
