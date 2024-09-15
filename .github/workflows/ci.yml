@@ -187,7 +187,7 @@ jobs:
       - uses: object-Object/ci/setup@v0
         with:
           python-version-file: .python-version
-          role-to-assume: ${{ steps.parse.outputs.outputs.ActionsCodeDeployRoleARN }}
+          role-to-assume: ${{ steps.parse.outputs.ActionsCodeDeployRoleARN }}
 
       - name: Create .env
         run: |
@@ -211,6 +211,6 @@ jobs:
         with:
           path: codedeploy
           stack: ${{ steps.parse.outputs.stack-name }}
-          application: ${{ steps.parse.outputs.outputs.ApplicationName }}
-          deployment-group: ${{ steps.parse.outputs.outputs.DeploymentGroupName }}
-          s3-bucket: ${{ steps.parse.outputs.outputs.ArtifactsBucketName }}
+          application: ${{ steps.parse.outputs.ApplicationName }}
+          deployment-group: ${{ steps.parse.outputs.DeploymentGroupName }}
+          s3-bucket: ${{ steps.parse.outputs.ArtifactsBucketName }}
