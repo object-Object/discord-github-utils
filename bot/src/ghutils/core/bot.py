@@ -1,13 +1,9 @@
 import logging
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
+from datetime import datetime
 
-from discord import (
-    BaseActivity,
-    CustomActivity,
-    Intents,
-    Interaction,
-)
+from discord import CustomActivity, Intents, Interaction
 from discord.app_commands import AppCommandContext, AppInstallationType
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, NoEntryPointError
@@ -40,7 +36,7 @@ class GHUtilsBot(Bot):
         super().__init__(
             command_prefix=commands.when_mentioned,
             intents=Intents.default(),
-            activity=self._get_activity(self.env),
+            activity=CustomActivity(f"/gh | v{VERSION}"),
             allowed_installs=AppInstallationType(guild=True, user=True),
             allowed_contexts=AppCommandContext(
                 guild=True, dm_channel=True, private_channel=True
@@ -48,6 +44,7 @@ class GHUtilsBot(Bot):
             tree_cls=GHUtilsCommandTree,
         )
         self.engine = create_engine(self.env.db_url)
+        self.start_time = datetime.now()
 
     @classmethod
     def of(cls, interaction: Interaction):
@@ -62,13 +59,6 @@ class GHUtilsBot(Bot):
     @classmethod
     def github_app_of(cls, interaction: Interaction):
         return cls.of(interaction).github_app(interaction)
-
-    @classmethod
-    def _get_activity(cls, env: GHUtilsEnv) -> BaseActivity:
-        name = f"/gh | v{VERSION}"
-        if env.commit_date:
-            name += f" ({env.commit_date})"
-        return CustomActivity(name)
 
     async def load_cogs(self):
         for cog in iter_modules(cogs, skip_internal=True):

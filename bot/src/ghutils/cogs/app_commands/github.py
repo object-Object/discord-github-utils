@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import logging
+import textwrap
 import uuid
 from datetime import datetime
 from typing import Any
 
-from discord import Embed, Interaction, app_commands
+from discord import Color, Embed, Interaction, app_commands
 from discord.ext.commands import GroupCog
 from discord.ui import Button, View
 from githubkit import GitHub
@@ -162,6 +163,60 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
                     "❌ Already logged out.",
                     ephemeral=True,
                 )
+
+    @app_commands.command()
+    async def status(
+        self,
+        interaction: Interaction,
+        visibility: MessageVisibility = "private",
+    ):
+        """Show information about GitHub Utils."""
+
+        embed = Embed(
+            title="GitHub Utils Status",
+            color=Color.green(),
+        )
+
+        commands = list(self.bot.tree.walk_commands())
+
+        if deployment := self.env.deployment:
+            commit_url = f"https://github.com/object-Object/discord-github-utils/commit/{deployment.commit_sha}"
+            embed.add_field(
+                name="Commit",
+                value=textwrap.dedent(
+                    f"""\
+                    [{shorten_sha(deployment.commit_sha)}]({commit_url}): {deployment.commit_message}
+                    {_discord_date(deployment.commit_timestamp)}"""
+                ),
+                inline=False,
+            )
+            embed.add_field(
+                name="Latest deployment",
+                value=_discord_date(deployment.timestamp),
+                inline=False,
+            )
+
+        embed.add_field(
+            name="Latest restart",
+            value=_discord_date(self.bot.start_time),
+            inline=False,
+        )
+        embed.add_field(name="Servers", value=f"{len(self.bot.guilds)}")
+        embed.add_field(name="Cogs", value=f"{len(self.bot.cogs)}")
+        embed.add_field(name="Commands", value=f"{len(commands)}")
+
+        await respond_with_visibility(interaction, visibility, embed=embed)
+
+
+def _discord_date(timestamp: int | float | datetime):
+    match timestamp:
+        case int():
+            pass
+        case float():
+            timestamp = int(timestamp)
+        case datetime():
+            timestamp = int(timestamp.timestamp())
+    return f"<t:{timestamp}:f> (<t:{timestamp}:R>)"
 
 
 def _create_issue_embed(repo: Repository, issue: Issue | PullRequest):

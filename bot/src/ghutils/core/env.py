@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime
 from typing import ClassVar, Literal, Self
 
 from githubkit import AppInstallationAuthStrategy, OAuthAppAuthStrategy
@@ -73,6 +74,14 @@ class GitHubSettings(BaseSettings, env_prefix="github__"):
         )
 
 
+class DeploymentSettings(BaseSettings, env_prefix="deployment__"):
+    timestamp: datetime
+
+    commit_sha: str
+    commit_timestamp: datetime
+    commit_message: str
+
+
 class GHUtilsEnv(BaseSettings):
     token: SecretStr
     db_url: str
@@ -81,11 +90,10 @@ class GHUtilsEnv(BaseSettings):
     api_port: int
     api_root_path: str
 
-    commit: str | None = None
-    commit_date: str | None = None
-
-    github: GitHubSettings = Field(default_factory=GitHubSettings.get)
+    github: GitHubSettings = Field({})
     """GitHub-related environment variables."""
+
+    deployment: DeploymentSettings | None = None
 
     @property
     def gh(self):

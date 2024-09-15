@@ -200,10 +200,12 @@ jobs:
 
           cat <<END_OF_FILE > .env
           IMAGE="${{ needs.push-image.outputs.digest }}"
-          COMMIT="${{ github.sha }}"
-          COMMIT_DATE="$(git show --no-patch --format=%ad --date=format:'%Y-%m-%d' ${{ github.sha }})"
           TOKEN="${{ secrets.DISCORD_TOKEN }}"
           GITHUB__CLIENT_SECRET="${{ secrets.GH_APP_CLIENT_SECRET }}"
+          DEPLOYMENT="{}"
+          DEPLOYMENT__COMMIT_SHA="${{ github.sha }}"
+          DEPLOYMENT__COMMIT_TIMESTAMP="$(git show --no-patch --format=%at ${{ github.sha }})"
+          DEPLOYMENT__COMMIT_MESSAGE="$(git log --oneline --format=%B -n 1 ${{ github.sha }} | head -n 1)"
           END_OF_FILE
 
           cat <<END_OF_FILE > secrets/github__private_key
