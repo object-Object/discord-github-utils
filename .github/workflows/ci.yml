@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       image-id: ${{ steps.build.outputs.imageid }}
-      image: ${{ env.REGISTRY }}/${{ github.repository }}@${{ steps.build.outputs.imageid }}
+      image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.imageid }}
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
@@ -74,12 +74,12 @@ jobs:
 
       - name: Synth aws-cdk stack
         if: false
-        run: cdk synth --ci --strict --no-lookups
+        run: cdk synth --ci --no-lookups --strict
 
-      - name: Upload aws-cdk artifact
+      - name: Upload synth artifact
         uses: actions/upload-artifact@v4
         with:
-          name: aws-cdk-build
+          name: aws-cdk-synth
           path: cdk.out
 
   # dummy "gate" job to restrict when the deployment jobs can run
@@ -122,7 +122,7 @@ jobs:
       - name: Load and push image
         run: |
           docker load --input /tmp/image.tar
-          docker image ls -a
+          docker image push --all-tags ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
   deploy-aws-cdk:
     needs:
@@ -134,12 +134,6 @@ jobs:
       id-token: write
     environment:
       name: prod-aws-cdk
-    outputs:
-      iam-role-arn: ${{ steps.deploy.outputs.ActionsCodeDeployRoleARN }}
-      stack-name: ${{ steps.deploy.outputs.StackName }}
-      application-name: ${{ steps.deploy.outputs.ApplicationName }}
-      deployment-group-name: ${{ steps.deploy.outputs.DeploymentGroupName }}
-      artifacts-bucket-name: ${{ steps.deploy.outputs.ArtifactsBucketName }}
     steps:
       - uses: actions/checkout@v4
       - uses: object-Object/ci/setup@v0
@@ -148,15 +142,20 @@ jobs:
           npm-packages: aws-cdk
           role-to-assume: default
 
-      - name: Download artifact
+      - name: Download synth artifact
         uses: actions/download-artifact@v4
         with:
-          name: aws-cdk-build
+          name: aws-cdk-synth
           path: cdk.out
 
       - name: Deploy stack
-        id: deploy
-        run: echo TODO
+        run: cdk deploy --ci --no-lookups --require-approval=never --app=cdk.out --outputs-file=outputs.json
+
+      - name: Upload outputs artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: aws-cdk-outputs
+          path: outputs.json
 
   deploy-codedeploy:
     needs:
@@ -165,8 +164,6 @@ jobs:
       - push-image
       - deploy-aws-cdk
     runs-on: ubuntu-latest
-    env:
-      IAM_ROLE_ARN: ${{ needs.deploy-aws-cdk.outputs.iam-role-arn }}
     permissions:
       id-token: write
       contents: read
@@ -175,10 +172,23 @@ jobs:
       url: ${{ steps.deploy.outputs.deployment-url }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Download outputs artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: aws-cdk-outputs
+          path: outputs.json
+
+      - name: Parse outputs
+        id: parse
+        uses: object-Object/ci/parse-cdk-outputs@v0
+        with:
+          file: outputs.json
+
       - uses: object-Object/ci/setup@v0
         with:
           python-version-file: .python-version
-          role-to-assume: ${{ env.IAM_ROLE_ARN }}
+          role-to-assume: ${{ steps.parse.outputs.outputs.ActionsCodeDeployRoleARN }}
 
       - name: Create .env
         run: |
@@ -201,7 +211,7 @@ jobs:
         uses: object-Object/ci/deploy-codedeploy@v0
         with:
           path: codedeploy
-          stack: ${{ needs.deploy-aws-cdk.outputs.stack-name }}
-          application: ${{ needs.deploy-aws-cdk.outputs.application-name }}
-          deployment-group: ${{ needs.deploy-aws-cdk.outputs.deployment-group-name }}
-          s3-bucket: ${{ needs.deploy-aws-cdk.outputs.artifacts-bucket-name }}
+          stack: ${{ steps.parse.outputs.stack-name }}
+          application: ${{ steps.parse.outputs.outputs.ApplicationName }}
+          deployment-group: ${{ steps.parse.outputs.outputs.DeploymentGroupName }}
+          s3-bucket: ${{ steps.parse.outputs.outputs.ArtifactsBucketName }}
