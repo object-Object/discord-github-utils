@@ -21,8 +21,7 @@ jobs:
   build-image:
     runs-on: ubuntu-latest
     outputs:
-      image-id: ${{ steps.build.outputs.imageid }}
-      image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.imageid }}
+      tag: ${{ fromJson(steps.meta.outputs.json).tags[0] }}
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
@@ -101,7 +100,9 @@ jobs:
       packages: write
     environment:
       name: docker
-      url: https://${{ needs.build-image.outputs.image }}
+      url: https://${{ needs.build-image.outputs.tag }}
+    outputs:
+      digest: ${{ steps.digest.outputs.value }}
     steps:
       - uses: docker/setup-buildx-action@v3
 
@@ -123,6 +124,10 @@ jobs:
 
       - name: Push image
         run: docker image push --all-tags ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      - name: Get image digest
+        id: digest
+        run: echo "value=$(docker inspect --format='{{index .RepoDigests 0}}' ${{ needs.build-image.outputs.tag }})" >> "$GITHUB_OUTPUT"
 
   deploy-aws-cdk:
     needs:
@@ -160,7 +165,6 @@ jobs:
   deploy-codedeploy:
     needs:
       - setup-deployments
-      - build-image
       - push-image
       - deploy-aws-cdk
     runs-on: ubuntu-latest
@@ -195,7 +199,7 @@ jobs:
           mkdir -p secrets
 
           cat <<END_OF_FILE > .env
-          IMAGE="${{ needs.build-image.outputs.image }}"
+          IMAGE="${{ needs.push-image.outputs.digest }}"
           COMMIT="${{ github.sha }}"
           COMMIT_DATE="$(git show --no-patch --format=%ad --date=format:'%Y-%m-%d' ${{ github.sha }})"
           TOKEN="${{ secrets.DISCORD_TOKEN }}"
