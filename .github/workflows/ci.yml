@@ -73,7 +73,6 @@ jobs:
         run: rye sync --no-lock --no-dev
 
       - name: Synth aws-cdk stack
-        if: false
         run: cdk synth --ci --no-lookups --strict
 
       - name: Upload synth artifact
