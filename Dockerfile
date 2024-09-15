@@ -28,3 +28,11 @@ COPY bot/ bot/
 
 # NOTE: this must be a list, otherwise signals (eg. SIGINT) are not forwarded to the bot
 CMD ["/bin/bash", "-c", "python -m ghutils.app"]
+
+HEALTHCHECK \
+    --interval=1m \
+    --timeout=30s \
+    --start-period=2m \
+    --start-interval=15s \
+    --retries=3 \
+    CMD ["python", "-m", "ghutils.health_check"]

@@ -10,7 +10,7 @@ dependencies = [
     "ghutils-common",
     "aws-cdk-lib>=2.158.0",
     "aws-cdk-github-oidc>=2.4.1",
-    "object-ci[aws-cdk] @ git+https://github.com/object-Object/ci",
+    "object-ci[aws-cdk] @ git+https://github.com/object-Object/ci@v0",
 ]
 
 [tool.rye]

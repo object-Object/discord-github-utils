@@ -117,7 +117,7 @@ mdurl==0.1.2
 multidict==6.0.5
     # via aiohttp
     # via yarl
-object-ci @ git+https://github.com/object-Object/ci@681c2a77d4b906df0273e52ff7fe390be4d7b54d
+object-ci @ git+https://github.com/object-Object/ci@d49aad2be03e0c6995be20d505d32aa54a6b7f89
     # via ghutils-infrastructure
 orjson==3.10.5
     # via fastapi

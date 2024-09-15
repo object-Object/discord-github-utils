@@ -10,6 +10,7 @@ services:
       GITHUB__CLIENT_ID: Iv23li0slKG6vf9kOBef
       GITHUB__REDIRECT_URI: https://ghutils.object.gay/api/login
       GITHUB__DEFAULT_INSTALLATION_ID: '54847303'
+      HEALTH_CHECK_URL: https://ghutils.object.gay/api/health
 
   postgres:
     restart: unless-stopped
