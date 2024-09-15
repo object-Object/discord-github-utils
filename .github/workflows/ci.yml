@@ -20,7 +20,6 @@ env:
   GH_APP_CLIENT_ID: Iv23li0slKG6vf9kOBef
   GH_APP_REDIRECT_URI: https://ghutils.object.gay/api/login
   GH_APP_DEFAULT_INSTALLATION_ID: '54847303'
-  CDK_DEPLOY_ROLE_ARN:
 
 jobs:
   build-image:
@@ -86,7 +85,6 @@ jobs:
         with:
           name: aws-cdk-build
           path: cdk.out
-          retention-days: 7
 
   # dummy "gate" job to restrict when the deployment jobs can run
   setup-deployments:
@@ -139,7 +137,7 @@ jobs:
       contents: read
       id-token: write
     environment:
-      name: aws-cdk
+      name: prod-aws-cdk
     outputs:
       iam-role-arn: ${{ steps.deploy.outputs.ActionsCodeDeployRoleARN }}
       stack-name: ${{ steps.deploy.outputs.StackName }}
@@ -152,7 +150,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           npm-packages: aws-cdk
-          role-to-assume: ${{ env.CDK_DEPLOY_ROLE_ARN }}
+          role-to-assume: default
 
       - name: Download artifact
         uses: actions/download-artifact@v4
@@ -177,7 +175,7 @@ jobs:
       id-token: write
       contents: read
     environment:
-      name: codedeploy
+      name: prod-codedeploy
       url: ${{ steps.deploy.outputs.deployment-url }}
     steps:
       - uses: actions/checkout@v4

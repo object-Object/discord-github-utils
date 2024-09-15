@@ -26,6 +26,25 @@ anyio==4.4.0
     # via watchfiles
 attrs==23.2.0
     # via aiohttp
+    # via cattrs
+    # via jsii
+aws-cdk-asset-awscli-v1==2.2.202
+    # via aws-cdk-lib
+aws-cdk-asset-kubectl-v20==2.1.2
+    # via aws-cdk-lib
+aws-cdk-asset-node-proxy-agent-v6==2.1.0
+    # via aws-cdk-lib
+aws-cdk-cloud-assembly-schema==36.0.25
+    # via aws-cdk-lib
+aws-cdk-github-oidc==2.4.1
+    # via ghutils-infrastructure
+    # via object-ci
+aws-cdk-lib==2.158.0
+    # via aws-cdk-github-oidc
+    # via ghutils-infrastructure
+    # via object-ci
+cattrs==23.2.3
+    # via jsii
 certifi==2024.6.2
     # via httpcore
     # via httpx
@@ -37,6 +56,9 @@ click==8.1.7
 colorama==0.4.6 ; sys_platform == 'win32' or platform_system == 'Windows'
     # via click
     # via uvicorn
+constructs==10.3.0
+    # via aws-cdk-github-oidc
+    # via aws-cdk-lib
 cryptography==43.0.0
     # via pyjwt
 discord-py==2.4.0
@@ -74,8 +96,18 @@ idna==3.7
     # via email-validator
     # via httpx
     # via yarl
+importlib-resources==6.4.5
+    # via jsii
 jinja2==3.1.4
     # via fastapi
+jsii==1.103.1
+    # via aws-cdk-asset-awscli-v1
+    # via aws-cdk-asset-kubectl-v20
+    # via aws-cdk-asset-node-proxy-agent-v6
+    # via aws-cdk-cloud-assembly-schema
+    # via aws-cdk-github-oidc
+    # via aws-cdk-lib
+    # via constructs
 markdown-it-py==3.0.0
     # via rich
 markupsafe==2.1.5
@@ -85,10 +117,21 @@ mdurl==0.1.2
 multidict==6.0.5
     # via aiohttp
     # via yarl
+object-ci @ git+https://github.com/object-Object/ci@681c2a77d4b906df0273e52ff7fe390be4d7b54d
+    # via ghutils-infrastructure
 orjson==3.10.5
     # via fastapi
 psycopg2-binary==2.9.9
     # via ghutils-bot
+publication==0.0.3
+    # via aws-cdk-asset-awscli-v1
+    # via aws-cdk-asset-kubectl-v20
+    # via aws-cdk-asset-node-proxy-agent-v6
+    # via aws-cdk-cloud-assembly-schema
+    # via aws-cdk-github-oidc
+    # via aws-cdk-lib
+    # via constructs
+    # via jsii
 pycparser==2.22 ; platform_python_implementation != 'PyPy'
     # via cffi
 pydantic==2.7.4
@@ -105,6 +148,8 @@ pygments==2.18.0
     # via rich
 pyjwt==2.9.0
     # via githubkit
+python-dateutil==2.9.0.post0
+    # via jsii
 python-dotenv==1.0.1
     # via pydantic-settings
     # via uvicorn
@@ -116,6 +161,8 @@ rich==13.7.1
     # via typer
 shellingham==1.5.4
     # via typer
+six==1.16.0
+    # via python-dateutil
 sniffio==1.3.1
     # via anyio
     # via httpx
@@ -125,12 +172,22 @@ sqlmodel==0.0.19
     # via ghutils-bot
 starlette==0.37.2
     # via fastapi
+typeguard==2.13.3
+    # via aws-cdk-asset-awscli-v1
+    # via aws-cdk-asset-kubectl-v20
+    # via aws-cdk-asset-node-proxy-agent-v6
+    # via aws-cdk-cloud-assembly-schema
+    # via aws-cdk-github-oidc
+    # via aws-cdk-lib
+    # via constructs
+    # via jsii
 typer==0.12.3
     # via fastapi-cli
 typing-extensions==4.12.2
     # via fastapi
     # via githubkit
     # via hishel
+    # via jsii
     # via pydantic
     # via pydantic-core
     # via sqlalchemy

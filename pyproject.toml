@@ -29,6 +29,8 @@ members = [
 
 [tool.rye.scripts]
 bot = { call="ghutils.app" }
+aws-cdk = { call="ghutils.aws_cdk.app" }
+
 setup = { chain=["setup:sync", "setup:pre-commit"] }
 "setup:sync" = "rye sync"
 "setup:pre-commit" = "pre-commit install"
