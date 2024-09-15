@@ -189,9 +189,12 @@ jobs:
           python-version-file: .python-version
           role-to-assume: ${{ steps.parse.outputs.ActionsCodeDeployRoleARN }}
 
-      - name: Create .env
+      - name: Create runtime files
+        working-directory: codedeploy
         run: |
-          cat <<END_OF_FILE > codedeploy/.env
+          mkdir -p secrets
+
+          cat <<END_OF_FILE > .env
           IMAGE="${{ needs.build-image.outputs.image }}"
           COMMIT="${{ github.sha }}"
           COMMIT_DATE="$(git show --no-patch --format=%ad --date=format:'%Y-%m-%d' ${{ github.sha }})"
@@ -199,9 +202,7 @@ jobs:
           GITHUB__CLIENT_SECRET="${{ secrets.GH_APP_CLIENT_SECRET }}"
           END_OF_FILE
 
-      - name: Create secrets/github__private_key
-        run: |
-          cat <<END_OF_FILE > codedeploy/secrets/github__private_key
+          cat <<END_OF_FILE > secrets/github__private_key
           ${{ secrets.GH_APP_PRIVATE_KEY }}
           END_OF_FILE
 
