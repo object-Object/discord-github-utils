@@ -15,7 +15,7 @@ on:
 env:
   NODE_VERSION: 18
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: object-object/discord-github-utils
 
 jobs:
   build-image:
@@ -118,10 +118,11 @@ jobs:
           name: docker-image
           path: /tmp
 
-      - name: Load and push image
-        run: |
-          docker load --input /tmp/image.tar
-          docker image push --all-tags ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+      - name: Load image
+        run: docker load --input /tmp/image.tar
+
+      - name: Push image
+        run: docker image push --all-tags ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
   deploy-aws-cdk:
     needs:
