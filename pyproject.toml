@@ -1,3 +1,7 @@
+[build-system]
+requires = ["hatchling", "hatch-regex-commit"]
+build-backend = "hatchling.build"
+
 [project]
 dynamic = ["version"]
 name = "discord-github-utils"
@@ -38,8 +42,10 @@ setup = { chain=["setup:sync", "setup:pre-commit"] }
 # Hatch version plugin (so `hatch version` works)
 
 [tool.hatch.version]
-source = "regex"
+source = "regex_commit"
 path = "common/src/ghutils/common/__version__.py"
+commit_message = "Bump version to `{new_version}`"
+tag_message = "Bump version to `{new_version}`"
 
 # linting/formatting
 
