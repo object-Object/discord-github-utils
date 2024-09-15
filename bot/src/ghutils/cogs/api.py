@@ -121,7 +121,7 @@ async def get_login(
     return HTMLResponse(SUCCESS_PAGE)
 
 
-@dataclass
+@dataclass(eq=False)
 class APICog(GHUtilsCog):
     server: Server | None = field(default=None, init=False)
 

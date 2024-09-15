@@ -20,7 +20,7 @@ class GHUtilsCogMeta(CogMeta):
         return super().__new__(cls, *args, **kwargs)
 
 
-@dataclass
+@dataclass(eq=False)
 class GHUtilsCog(Cog, metaclass=GHUtilsCogMeta):
     """Base class for GHUtils cogs.
 
