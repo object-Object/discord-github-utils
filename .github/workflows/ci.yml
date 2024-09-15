@@ -16,10 +16,6 @@ env:
   NODE_VERSION: 18
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  GH_APP_ID: '997788'
-  GH_APP_CLIENT_ID: Iv23li0slKG6vf9kOBef
-  GH_APP_REDIRECT_URI: https://ghutils.object.gay/api/login
-  GH_APP_DEFAULT_INSTALLATION_ID: '54847303'
 
 jobs:
   build-image:
@@ -191,11 +187,7 @@ jobs:
           COMMIT="${{ github.sha }}"
           COMMIT_DATE="$(git show --no-patch --format=%ad --date=format:'%Y-%m-%d' ${{ github.sha }})"
           TOKEN="${{ secrets.DISCORD_TOKEN }}"
-          GITHUB__APP_ID="${{ env.GH_APP_ID }}"
-          GITHUB__CLIENT_ID="${{ env.GH_APP_CLIENT_ID }}"
           GITHUB__CLIENT_SECRET="${{ secrets.GH_APP_CLIENT_SECRET }}"
-          GITHUB__REDIRECT_URI="${{ env.GH_APP_REDIRECT_URI }}"
-          GITHUB__DEFAULT_INSTALLATION_ID="${{ env.GH_APP_DEFAULT_INSTALLATION_ID }}"
           END_OF_FILE
 
       - name: Create secrets/github__private_key

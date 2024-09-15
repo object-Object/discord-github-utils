@@ -6,6 +6,10 @@ services:
     environment:
       ENVIRONMENT: prod
       API_ROOT_PATH: /api
+      GITHUB__APP_ID: '997788'
+      GITHUB__CLIENT_ID: Iv23li0slKG6vf9kOBef
+      GITHUB__REDIRECT_URI: https://ghutils.object.gay/api/login
+      GITHUB__DEFAULT_INSTALLATION_ID: '54847303'
 
   postgres:
     restart: unless-stopped
