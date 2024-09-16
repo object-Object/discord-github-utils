@@ -15,6 +15,9 @@ type ServerConfigOption = Literal[
 ]
 
 
+# default_permissions doesn't seem to be enforced for user installs
+# so only allow this command to be installed when the bot is actually in a guild
+@app_commands.allowed_installs(guilds=True, users=False)
 @app_commands.guild_only()
 @app_commands.default_permissions(manage_guild=True)
 class AdminConfigCog(GHUtilsCog, GroupCog, group_name="gh_config_admin"):
