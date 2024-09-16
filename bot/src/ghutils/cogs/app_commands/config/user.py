@@ -1,7 +1,7 @@
 from contextlib import contextmanager
-from typing import Literal
+from typing import Any, Literal
 
-from discord import Interaction, app_commands
+from discord import Color, Embed, Interaction, app_commands
 from discord.ext.commands import GroupCog
 from sqlalchemy.exc import InvalidRequestError
 from sqlmodel import Session
@@ -20,21 +20,38 @@ class UserConfigCog(GHUtilsCog, GroupCog, group_name="gh_config"):
     """View or change config options for your account."""
 
     @app_commands.command()
-    async def get(
-        self,
-        interaction: Interaction,
-        option: UserConfigOption = "all",
-    ):
+    async def get(self, interaction: Interaction):
         """View the current value of config options for your account."""
 
         with self.bot.db_session() as session:
-            config = _get_config(session, interaction)
-            match option:
-                case "all":
-                    message = config
-                case "default_repo":
-                    message = config.default_repo
-            await interaction.response.send_message(str(message), ephemeral=True)
+            embeds = list[Embed]()
+
+            user_config = get_user_config(session, interaction)
+            user_embed = Embed(
+                title="Global Config",
+                description="Config options for your account in all servers and/or in DMs, depending on the option.",
+                color=Color.blue(),
+            )
+            _add_config_options(
+                user_embed,
+                ("default_repo", user_config.default_repo),
+            )
+            embeds.append(user_embed)
+
+            if interaction.guild:
+                guild_config = get_user_guild_config(session, interaction)
+                guild_embed = Embed(
+                    title="Local Config",
+                    description="Config options for your account in this server.",
+                    color=Color.blue(),
+                )
+                _add_config_options(
+                    guild_embed,
+                    ("default_repo", guild_config.default_repo),
+                )
+                embeds.append(guild_embed)
+
+            await interaction.response.send_message(embeds=embeds, ephemeral=True)
 
     @app_commands.command()
     async def reset(
@@ -98,6 +115,12 @@ async def _send_updated[T](interaction: Interaction, name: str, old: T | None, n
         message = f"✅ Set **{name}** to `{new}` in {scope} for your account."
 
     await interaction.response.send_message(message, ephemeral=True)
+
+
+def _add_config_options(embed: Embed, *options: tuple[str, Any]):
+    for name, value in options:
+        embed.add_field(name=name, value=f"`{value}`", inline=False)
+    return embed
 
 
 def _get_config(session: Session, interaction: Interaction):
