@@ -105,7 +105,7 @@ class UserConfigCog(GHUtilsCog, GroupCog, group_name="gh_config"):
 
 async def _send_updated[T](interaction: Interaction, name: str, old: T | None, new: T):
     if interaction.guild:
-        scope = f"**{interaction.guild.name}**"
+        scope = "this server"
     else:
         scope = "DMs"
 
