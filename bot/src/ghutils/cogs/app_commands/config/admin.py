@@ -17,7 +17,7 @@ type ServerConfigOption = Literal[
 
 @app_commands.guild_only()
 @app_commands.default_permissions(manage_guild=True)
-class AdminConfigCog(GHUtilsCog, GroupCog, group_name="gh_admin_config"):
+class AdminConfigCog(GHUtilsCog, GroupCog, group_name="gh_config_admin"):
     """View or change config options for everyone who uses the bot in this server."""
 
     @app_commands.command()
