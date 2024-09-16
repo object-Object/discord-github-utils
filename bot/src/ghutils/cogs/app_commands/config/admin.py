@@ -19,7 +19,7 @@ type ServerConfigOption = Literal[
 # so only allow this command to be installed when the bot is actually in a guild
 @app_commands.allowed_installs(guilds=True, users=False)
 @app_commands.guild_only()
-@app_commands.default_permissions(manage_guild=True)
+@app_commands.default_permissions()
 class AdminConfigCog(GHUtilsCog, GroupCog, group_name="gh_config_admin"):
     """View or change config options for everyone who uses the bot in this server."""
 
