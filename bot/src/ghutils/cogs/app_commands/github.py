@@ -173,7 +173,7 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
         """Show information about GitHub Utils."""
 
         embed = Embed(
-            title="GitHub Utils Status",
+            title="Bot Status",
             color=Color.green(),
         )
 
