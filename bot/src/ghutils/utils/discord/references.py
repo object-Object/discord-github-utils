@@ -9,7 +9,7 @@ from discord import Interaction
 from discord.app_commands import Choice, Transform, Transformer
 from githubkit import GitHub, Response
 from githubkit.exception import GitHubException, RequestFailed
-from githubkit.rest import Commit, Issue, PullRequest
+from githubkit.rest import Commit, FullRepository, Issue, PullRequest
 
 from ghutils.core.bot import GHUtilsBot
 from ghutils.core.types import LoginState
@@ -232,6 +232,7 @@ class CommitReferenceTransformer(ReferenceTransformer[Commit]):
         search: str,
     ) -> list[tuple[str | int, str]]:
         # commit search returns no results for an empty search, so don't bother trying
+        # FIXME: make this show a list of recent commits instead
         if not search.strip():
             return []
 
@@ -247,8 +248,24 @@ class CommitReferenceTransformer(ReferenceTransformer[Commit]):
         ]
 
 
+# FIXME: implement autocomplete
+class RepositoryReferenceTransformer(Transformer):
+    async def transform(
+        self,
+        interaction: Interaction,
+        value: str,
+    ) -> FullRepository:
+        if not (repo := Repository.parse(value)):
+            raise ValueError(f"Missing '/' between username and repository: {value}")
+
+        async with GHUtilsBot.github_app_of(interaction) as (github, _):
+            return await gh_request(github.rest.repos.async_get(repo.owner, repo.repo))
+
+
 IssueReference = Transform[tuple[Repository, Issue], IssueReferenceTransformer]
 
 PRReference = Transform[tuple[Repository, PullRequest], PRReferenceTransformer]
 
 CommitReference = Transform[tuple[Repository, Commit], CommitReferenceTransformer]
+
+RepositoryReference = Transform[FullRepository, RepositoryReferenceTransformer]

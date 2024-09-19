@@ -23,6 +23,7 @@ from ghutils.utils.discord.references import (
     CommitReference,
     IssueReference,
     PRReference,
+    RepositoryReference,
 )
 from ghutils.utils.discord.visibility import MessageVisibility, respond_with_visibility
 from ghutils.utils.github import (
@@ -116,6 +117,42 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
 
         if isinstance(commit.author, SimpleUser):
             set_embed_author(embed, commit.author)
+
+        await respond_with_visibility(interaction, visibility, embed=embed)
+
+    @app_commands.command()
+    async def repo(
+        self,
+        interaction: Interaction,
+        repo: RepositoryReference,
+        visibility: MessageVisibility = "private",
+    ):
+        """Get a link to a GitHub repository."""
+
+        async with self.bot.github_app(interaction) as (github, _):
+            result = await github.async_graphql(
+                """
+                query($owner: String!, $name: String!) {
+                    repository(owner: $owner, name: $name) {
+                        openGraphImageUrl
+                    }
+                }
+                """,
+                {
+                    "owner": repo.owner.login,
+                    "name": repo.name,
+                },
+            )
+            image_url: str = result["repository"]["openGraphImageUrl"]
+
+        embed = Embed(
+            title=repo.full_name,
+            description=repo.description,
+            url=repo.html_url,
+        ).set_image(
+            url=image_url,
+        )
+        set_embed_author(embed, repo.owner)
 
         await respond_with_visibility(interaction, visibility, embed=embed)
 
