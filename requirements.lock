@@ -114,6 +114,8 @@ markupsafe==2.1.5
     # via jinja2
 mdurl==0.1.2
     # via markdown-it-py
+more-itertools==10.5.0
+    # via ghutils-bot
 multidict==6.0.5
     # via aiohttp
     # via yarl
@@ -121,6 +123,8 @@ object-ci @ git+https://github.com/object-Object/ci@d49aad2be03e0c6995be20d505d3
     # via ghutils-infrastructure
 orjson==3.10.5
     # via fastapi
+pfzy==0.3.4
+    # via ghutils-bot
 psycopg2-binary==2.9.9
     # via ghutils-bot
 publication==0.0.3

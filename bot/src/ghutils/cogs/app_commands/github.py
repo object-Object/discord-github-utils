@@ -4,16 +4,22 @@ import logging
 import textwrap
 import uuid
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
+import pfzy
 from discord import Color, Embed, Interaction, app_commands
+from discord.app_commands import Range
 from discord.ext.commands import GroupCog
 from discord.ui import Button, View
 from githubkit import GitHub
 from githubkit.exception import GitHubException
 from githubkit.rest import Issue, PullRequest, SimpleUser
+from more_itertools import consecutive_groups
+from yarl import URL
 
-from ghutils.core.cog import GHUtilsCog
+from ghutils.core.cog import GHUtilsCog, SubGroup
+from ghutils.core.types import LoginState, NotLoggedInError
 from ghutils.db.models import (
     UserGitHubTokens,
     UserLogin,
@@ -243,6 +249,122 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
         embed.add_field(name="Commands", value=f"{len(commands)}")
 
         await respond_with_visibility(interaction, visibility, embed=embed)
+
+    class Search(SubGroup):
+        """Search for things on GitHub."""
+
+        @app_commands.command()
+        async def files(
+            self,
+            interaction: Interaction,
+            repo: FullRepositoryOption,
+            query: Range[str, 1, 128],
+            ref: Range[str, 1, 255] | None = None,
+            exact: bool = False,
+            limit: Range[int, 1, 25] = 5,
+            visibility: MessageVisibility = "private",
+        ):
+            """Search for files in a repository by name.
+
+            Args:
+                ref: Branch name, tag name, or commit to search in. Defaults to the
+                    default branch of the repo.
+                exact: If true, use exact search; otherwise use fuzzy search.
+                limit: Maximum number of results to show.
+            """
+
+            async with self.bot.github_app(interaction) as (github, state):
+                if state != LoginState.LOGGED_IN:
+                    raise NotLoggedInError()
+
+                if ref is None:
+                    ref = repo.default_branch
+
+                tree = await gh_request(
+                    github.rest.git.async_get_tree(
+                        repo.owner.login,
+                        repo.name,
+                        ref,
+                        recursive="1",
+                    )
+                )
+
+                sha = tree.sha[:12]
+                tree_dict = {item.path: item for item in tree.tree if item.path}
+
+                matches = await pfzy.fuzzy_match(
+                    query,
+                    list(tree_dict.keys()),
+                    scorer=pfzy.substr_scorer if exact else pfzy.fzy_scorer,
+                )
+
+                embed = (
+                    Embed(
+                        title="File search results",
+                    )
+                    .set_author(
+                        name=repo.full_name,
+                        url=repo.html_url,
+                        icon_url=repo.owner.avatar_url,
+                    )
+                    .set_footer(
+                        text=f"{repo.full_name}@{ref}  •  Total results: {len(matches)}",
+                    )
+                )
+
+                # code search only works on the default branch
+                # so don't add the link otherwise, since it won't be useful
+                if ref == repo.default_branch:
+                    embed.url = str(
+                        URL("https://github.com/search").with_query(
+                            type="code",
+                            q=f'repo:{repo.full_name} path:"{query}"',
+                        )
+                    )
+
+                if matches:
+                    embed.color = Color.green()
+                else:
+                    embed.description = "⚠️ No matches found."
+                    embed.color = Color.red()
+
+                size = 0
+                for match in matches[:limit]:
+                    path: str = match["value"]
+                    indices: list[int] = match["indices"]
+
+                    item = tree_dict[path]
+
+                    icon = "📁" if item.type == "tree" else "📄"
+                    url = f"https://github.com/{repo.full_name}/{item.type}/{sha}/{item.path}"
+
+                    parts = list[str]()
+                    index = 0
+                    for group in consecutive_groups(indices):
+                        group = list(group)
+                        parts += [
+                            # everything before the start of the group
+                            path[index : group[0]],
+                            "**",
+                            # everything in the group
+                            path[group[0] : group[-1] + 1],
+                            "**",
+                        ]
+                        index = group[-1] + 1
+                    # everything after the last group
+                    parts.append(path[index:])
+                    highlighted_path = "".join(parts)
+
+                    name = f"{icon} {Path(path).name}"
+                    value = f"[{highlighted_path}]({url})"
+
+                    size += len(name) + len(value)
+                    if size > 5000:
+                        break
+
+                    embed.add_field(name=name, value=value, inline=False)
+
+                await respond_with_visibility(interaction, visibility, embed=embed)
 
 
 def _discord_date(timestamp: int | float | datetime):

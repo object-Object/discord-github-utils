@@ -10,6 +10,8 @@ from discord.app_commands import (
     TransformerError,
 )
 
+from ghutils.core.types import NotLoggedInError
+
 
 class GHUtilsCommandTree(CommandTree):
     async def on_error(self, interaction: Interaction, error: AppCommandError):
@@ -35,6 +37,9 @@ class GHUtilsCommandTree(CommandTree):
                     value=str(value),
                     inline=False,
                 )
+            case NotLoggedInError():
+                embed.title = "Not logged in!"
+                embed.description = "You must be logged in with GitHub to use this command. Use `/gh login` to log in, then try again."
             case _:
                 await super().on_error(interaction, error)
                 embed.title = "Command failed!"

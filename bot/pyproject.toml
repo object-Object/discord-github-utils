@@ -15,6 +15,8 @@ dependencies = [
     "sqlmodel>=0.0.19",
     "psycopg2-binary>=2.9.9",
     "githubkit[auth-app]>=0.11.8",
+    "pfzy>=0.3.4",
+    "more-itertools>=10.5.0",
 ]
 
 [tool.rye]
