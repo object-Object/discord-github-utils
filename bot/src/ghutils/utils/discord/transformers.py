@@ -12,6 +12,7 @@ from githubkit.rest import FullRepository
 
 from ghutils.core.bot import GHUtilsBot
 from ghutils.core.types import LoginState
+from ghutils.db.config import get_configs
 
 from ..github import RepositoryName, gh_request
 
@@ -34,6 +35,10 @@ class RepositoryNameTransformer(Transformer):
         elif value:
             query = f"{value} in:name fork:true"
         else:
+            with GHUtilsBot.db_session_of(interaction) as session:
+                configs = get_configs(session, interaction)
+                if repo := configs.default_repo:
+                    return [Choice(name=str(repo), value=str(repo))]
             return []
 
         async with GHUtilsBot.github_app_of(interaction) as (github, state):
