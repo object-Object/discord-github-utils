@@ -23,8 +23,8 @@ from ghutils.utils.discord.references import (
     CommitReference,
     IssueReference,
     PRReference,
-    RepositoryReference,
 )
+from ghutils.utils.discord.transformers import FullRepositoryOption
 from ghutils.utils.discord.visibility import MessageVisibility, respond_with_visibility
 from ghutils.utils.github import (
     CommitCheckState,
@@ -124,7 +124,7 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
     async def repo(
         self,
         interaction: Interaction,
-        repo: RepositoryReference,
+        repo: FullRepositoryOption,
         visibility: MessageVisibility = "private",
     ):
         """Get a link to a GitHub repository."""
