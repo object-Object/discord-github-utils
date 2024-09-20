@@ -6,12 +6,12 @@ from discord.app_commands import Transform, Transformer
 from ghutils.core.bot import GHUtilsBot
 from ghutils.core.types import LoginState
 
-from ..github import Repository, gh_request
+from ..github import RepositoryName, gh_request
 
 
-class RepositoryTransformer(Transformer):
+class RepositoryNameTransformer(Transformer):
     async def transform(self, interaction: Interaction, value: str):
-        if result := Repository.parse(value):
+        if result := RepositoryName.parse(value):
             return result
 
         async with GHUtilsBot.github_app_of(interaction) as (github, state):
@@ -21,7 +21,7 @@ class RepositoryTransformer(Transformer):
                 )
 
             user = await gh_request(github.rest.users.async_get_authenticated())
-            return Repository(owner=user.login, repo=value)
+            return RepositoryName(owner=user.login, repo=value)
 
 
-RepositoryOption = Transform[Repository, RepositoryTransformer]
+RepositoryNameOption = Transform[RepositoryName, RepositoryNameTransformer]

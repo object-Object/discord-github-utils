@@ -6,7 +6,7 @@ from typing import Callable, cast, overload
 from discord import Interaction
 from sqlmodel import Session
 
-from ghutils.utils.github import Repository
+from ghutils.utils.github import RepositoryName
 
 from .models import GuildConfig, UserConfig, UserGuildConfig
 
@@ -16,7 +16,7 @@ class GlobalConfigs:
     user: UserConfig
 
     @property
-    def default_repo(self) -> Repository | None:
+    def default_repo(self) -> RepositoryName | None:
         return self.user.default_repo
 
 
@@ -26,7 +26,7 @@ class GuildConfigs(GlobalConfigs):
     guild: GuildConfig
 
     @property
-    def default_repo(self) -> Repository | None:
+    def default_repo(self) -> RepositoryName | None:
         return self.user_guild.default_repo or self.guild.default_repo
 
 

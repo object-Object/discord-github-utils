@@ -7,7 +7,7 @@ from sqlalchemy.exc import InvalidRequestError
 
 from ghutils.core.cog import GHUtilsCog, SubGroup
 from ghutils.db.config import get_guild_config
-from ghutils.utils.discord.transformers import RepositoryOption
+from ghutils.utils.discord.transformers import RepositoryNameOption
 
 type ServerConfigOption = Literal[
     "default_repo",
@@ -74,7 +74,7 @@ class AdminConfigCog(GHUtilsCog, GroupCog, group_name="gh_config_admin"):
         async def default_repo(
             self,
             interaction: Interaction,
-            value: RepositoryOption,
+            value: RepositoryNameOption,
         ):
             with self._update_config(interaction) as config:
                 old_value = config.default_repo

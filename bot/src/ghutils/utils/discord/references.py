@@ -15,7 +15,7 @@ from ghutils.core.bot import GHUtilsBot
 from ghutils.core.types import LoginState
 from ghutils.db.config import get_configs
 
-from ..github import Repository, gh_request, shorten_sha
+from ..github import RepositoryName, gh_request, shorten_sha
 from ..strings import truncate_str
 
 logger = logging.getLogger(__name__)
@@ -34,7 +34,7 @@ class ReferenceTransformer[T](Transformer, ABC):
     async def resolve_reference(
         self,
         github: GitHub[Any],
-        repo: Repository,
+        repo: RepositoryName,
         reference: str,
     ) -> T: ...
 
@@ -42,7 +42,7 @@ class ReferenceTransformer[T](Transformer, ABC):
     async def search_for_autocomplete(
         self,
         github: GitHub[Any],
-        repo: Repository,
+        repo: RepositoryName,
         search: str,
     ) -> Iterable[tuple[str | int, str]]:
         """Returns a list of `(reference, description)`.
@@ -54,7 +54,7 @@ class ReferenceTransformer[T](Transformer, ABC):
         self,
         interaction: Interaction,
         value: str,
-    ) -> tuple[Repository, T]:
+    ) -> tuple[RepositoryName, T]:
         repo, raw_reference = await self.get_repo_and_reference(interaction, value)
 
         match = re.match(rf"^({self.reference_pattern})", raw_reference)
@@ -105,7 +105,7 @@ class ReferenceTransformer[T](Transformer, ABC):
         self,
         interaction: Interaction,
         value: str,
-    ) -> tuple[Repository, str]:
+    ) -> tuple[RepositoryName, str]:
         if self.separator in value:
             raw_repo, rest = value.split(self.separator, maxsplit=1)
         else:
@@ -119,14 +119,14 @@ class ReferenceTransformer[T](Transformer, ABC):
                     return repo, rest
             raise ValueError(f"Missing username and repository: {value}")
 
-        if not (repo := Repository.parse(raw_repo)):
+        if not (repo := RepositoryName.parse(raw_repo)):
             raise ValueError(f"Missing '/' between username and repository: {value}")
 
         return repo, rest
 
     def build_choice(
         self,
-        repo: Repository,
+        repo: RepositoryName,
         reference: str | int,
         description: str,
     ) -> Choice[str]:
@@ -150,7 +150,7 @@ class IssueOrPRReferenceTransformer[T](ReferenceTransformer[T]):
     async def search_for_autocomplete(
         self,
         github: GitHub[Any],
-        repo: Repository,
+        repo: RepositoryName,
         search: str,
     ) -> list[tuple[str | int, str]]:
         results = await gh_request(
@@ -170,7 +170,7 @@ class IssueReferenceTransformer(IssueOrPRReferenceTransformer[Issue]):
     async def resolve_reference(
         self,
         github: GitHub[Any],
-        repo: Repository,
+        repo: RepositoryName,
         reference: str,
     ) -> Issue:
         return await gh_request(
@@ -190,7 +190,7 @@ class PRReferenceTransformer(IssueOrPRReferenceTransformer[PullRequest]):
     async def resolve_reference(
         self,
         github: GitHub[Any],
-        repo: Repository,
+        repo: RepositoryName,
         reference: str,
     ) -> PullRequest:
         return await gh_request(
@@ -214,7 +214,7 @@ class CommitReferenceTransformer(ReferenceTransformer[Commit]):
     async def resolve_reference(
         self,
         github: GitHub[Any],
-        repo: Repository,
+        repo: RepositoryName,
         reference: str,
     ) -> Commit:
         return await gh_request(
@@ -228,7 +228,7 @@ class CommitReferenceTransformer(ReferenceTransformer[Commit]):
     async def search_for_autocomplete(
         self,
         github: GitHub[Any],
-        repo: Repository,
+        repo: RepositoryName,
         search: str,
     ) -> list[tuple[str | int, str]]:
         # commit search returns no results for an empty search, so don't bother trying
@@ -255,17 +255,17 @@ class RepositoryReferenceTransformer(Transformer):
         interaction: Interaction,
         value: str,
     ) -> FullRepository:
-        if not (repo := Repository.parse(value)):
+        if not (repo := RepositoryName.parse(value)):
             raise ValueError(f"Missing '/' between username and repository: {value}")
 
         async with GHUtilsBot.github_app_of(interaction) as (github, _):
             return await gh_request(github.rest.repos.async_get(repo.owner, repo.repo))
 
 
-IssueReference = Transform[tuple[Repository, Issue], IssueReferenceTransformer]
+IssueReference = Transform[tuple[RepositoryName, Issue], IssueReferenceTransformer]
 
-PRReference = Transform[tuple[Repository, PullRequest], PRReferenceTransformer]
+PRReference = Transform[tuple[RepositoryName, PullRequest], PRReferenceTransformer]
 
-CommitReference = Transform[tuple[Repository, Commit], CommitReferenceTransformer]
+CommitReference = Transform[tuple[RepositoryName, Commit], CommitReferenceTransformer]
 
 RepositoryReference = Transform[FullRepository, RepositoryReferenceTransformer]

@@ -30,7 +30,7 @@ from ghutils.utils.github import (
     CommitCheckState,
     IssueState,
     PullRequestState,
-    Repository,
+    RepositoryName,
     SmartPaginator,
     gh_request,
     shorten_sha,
@@ -256,7 +256,7 @@ def _discord_date(timestamp: int | float | datetime):
     return f"<t:{timestamp}:f> (<t:{timestamp}:R>)"
 
 
-def _create_issue_embed(repo: Repository, issue: Issue | PullRequest):
+def _create_issue_embed(repo: RepositoryName, issue: Issue | PullRequest):
     match issue:
         case Issue():
             issue_type = "Issue"
@@ -291,7 +291,7 @@ def _create_issue_embed(repo: Repository, issue: Issue | PullRequest):
 # else return PENDING
 async def _get_commit_check_state(
     github: GitHub[Any],
-    repo: Repository,
+    repo: RepositoryName,
     sha: str,
 ) -> CommitCheckState:
     state = CommitCheckState.NEUTRAL

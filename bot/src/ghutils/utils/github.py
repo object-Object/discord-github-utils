@@ -87,7 +87,7 @@ class CommitCheckState(Enum):
 
 
 @dataclass
-class Repository:
+class RepositoryName:
     owner: str
     repo: str
 

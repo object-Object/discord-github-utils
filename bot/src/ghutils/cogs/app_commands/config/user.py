@@ -8,7 +8,7 @@ from sqlmodel import Session
 
 from ghutils.core.cog import GHUtilsCog, SubGroup
 from ghutils.db.config import get_user_config, get_user_guild_config
-from ghutils.utils.discord.transformers import RepositoryOption
+from ghutils.utils.discord.transformers import RepositoryNameOption
 
 type UserConfigOption = Literal[
     "default_repo",
@@ -87,7 +87,7 @@ class UserConfigCog(GHUtilsCog, GroupCog, group_name="gh_config"):
         async def default_repo(
             self,
             interaction: Interaction,
-            value: RepositoryOption,
+            value: RepositoryNameOption,
         ):
             with self._update_config(interaction) as config:
                 old_value = config.default_repo

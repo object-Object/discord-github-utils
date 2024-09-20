@@ -4,9 +4,9 @@ from githubkit import OAuthTokenAuthStrategy
 from sqlalchemy import BigInteger, Engine
 from sqlmodel import Field, SQLModel  # pyright: ignore[reportUnknownVariableType]
 
-from ghutils.utils.github import Repository
+from ghutils.utils.github import RepositoryName
 
-from .types import DatetimeType, RepositoryType
+from .types import DatetimeType, RepositoryNameType
 
 
 class UserGitHubTokens(SQLModel, table=True):
@@ -63,20 +63,26 @@ class UserLogin(SQLModel, table=True):
 class UserConfig(SQLModel, table=True):
     user_id: int = Field(primary_key=True, sa_type=BigInteger)
 
-    default_repo: Repository | None = Field(default=None, sa_type=RepositoryType)
+    default_repo: RepositoryName | None = Field(
+        default=None, sa_type=RepositoryNameType
+    )
 
 
 class UserGuildConfig(SQLModel, table=True):
     user_id: int = Field(primary_key=True, sa_type=BigInteger)
     guild_id: int = Field(primary_key=True, sa_type=BigInteger)
 
-    default_repo: Repository | None = Field(default=None, sa_type=RepositoryType)
+    default_repo: RepositoryName | None = Field(
+        default=None, sa_type=RepositoryNameType
+    )
 
 
 class GuildConfig(SQLModel, table=True):
     guild_id: int = Field(primary_key=True, sa_type=BigInteger)
 
-    default_repo: Repository | None = Field(default=None, sa_type=RepositoryType)
+    default_repo: RepositoryName | None = Field(
+        default=None, sa_type=RepositoryNameType
+    )
 
 
 def create_db_and_tables(engine: Engine):
