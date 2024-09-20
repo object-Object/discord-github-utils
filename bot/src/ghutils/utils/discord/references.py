@@ -111,6 +111,7 @@ class ReferenceTransformer[T](Transformer, ABC):
         else:
             raw_repo = ""
             rest = value
+        rest = rest.strip()
 
         if not raw_repo:
             with GHUtilsBot.db_session_of(interaction) as session:
@@ -230,20 +231,25 @@ class CommitReferenceTransformer(ReferenceTransformer[Commit]):
         repo: RepositoryName,
         search: str,
     ) -> list[tuple[str | int, str]]:
-        # commit search returns no results for an empty search, so don't bother trying
-        # FIXME: make this show a list of recent commits instead
-        if not search.strip():
-            return []
-
-        results = await gh_request(
-            github.rest.search.async_commits(
+        if search:
+            resp = await github.rest.search.async_commits(
                 f"{search} repo:{repo}",
                 per_page=25,
             )
-        )
+            results = resp.parsed_data.items
+        else:
+            # commit search doesn't allow an empty search, so list recent commits instead
+            results = await gh_request(
+                github.rest.repos.async_list_commits(
+                    repo.owner,
+                    repo.repo,
+                    per_page=25,
+                )
+            )
+
         return [
             (shorten_sha(result.sha), result.commit.message.split("\n")[0])
-            for result in results.items
+            for result in results
         ]
 
 
