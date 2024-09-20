@@ -11,7 +11,7 @@ from ..github import RepositoryName, gh_request
 
 class RepositoryNameTransformer(Transformer):
     async def transform(self, interaction: Interaction, value: str):
-        if result := RepositoryName.parse(value):
+        if result := RepositoryName.try_parse(value):
             return result
 
         async with GHUtilsBot.github_app_of(interaction) as (github, state):

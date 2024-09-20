@@ -16,7 +16,7 @@ class RepositoryNameType(TypeDecorator[RepositoryName]):
 
     def process_result_value(self, value: str | None, dialect: Dialect):
         if value is not None:
-            return RepositoryName.parse(value)
+            return RepositoryName.try_parse(value)
 
 
 # https://docs.sqlalchemy.org/en/20/core/custom_types.html#store-timezone-aware-timestamps-as-timezone-naive-utc

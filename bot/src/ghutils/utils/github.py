@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum, auto
 from functools import cached_property
-from typing import Any, Awaitable, Callable, List, cast
+from typing import Any, Awaitable, Callable, List, Self, cast
 
 from discord import Color
 from githubkit import Paginator, Response
@@ -92,11 +92,22 @@ class RepositoryName:
     repo: str
 
     @classmethod
-    def parse(cls, value: str):
-        if "/" in value:
-            owner, repo = value.split("/")
-            if owner and repo:
-                return cls(owner=owner, repo=repo)
+    def parse(cls, value: str) -> Self:
+        if "/" not in value:
+            raise ValueError("Missing '/' between username and repository")
+
+        owner, repo = value.split("/", maxsplit=1)
+        if not (owner and repo):
+            raise ValueError("Owner and/or repository is blank")
+
+        return cls(owner=owner, repo=repo)
+
+    @classmethod
+    def try_parse(cls, value: str) -> Self | None:
+        try:
+            return cls.parse(value)
+        except ValueError:
+            return None
 
     def __str__(self) -> str:
         return f"{self.owner}/{self.repo}"

@@ -119,8 +119,7 @@ class ReferenceTransformer[T](Transformer, ABC):
                     return repo, rest
             raise ValueError(f"Missing username and repository: {value}")
 
-        if not (repo := RepositoryName.parse(raw_repo)):
-            raise ValueError(f"Missing '/' between username and repository: {value}")
+        repo = RepositoryName.parse(raw_repo)
 
         return repo, rest
 
@@ -255,9 +254,7 @@ class RepositoryReferenceTransformer(Transformer):
         interaction: Interaction,
         value: str,
     ) -> FullRepository:
-        if not (repo := RepositoryName.parse(value)):
-            raise ValueError(f"Missing '/' between username and repository: {value}")
-
+        repo = RepositoryName.parse(value)
         async with GHUtilsBot.github_app_of(interaction) as (github, _):
             return await gh_request(github.rest.repos.async_get(repo.owner, repo.repo))
 
