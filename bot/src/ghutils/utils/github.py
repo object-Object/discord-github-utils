@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from enum import Enum, auto
-from functools import cached_property
+from enum import Enum
 from typing import Any, Awaitable, Callable, List, Self, cast, overload
 
 from discord import Color
@@ -12,9 +11,12 @@ from githubkit.rest import Issue, IssuePropPullRequest, PullRequest
 
 
 class IssueState(Enum):
-    OPEN = auto()
-    CLOSED = auto()
-    NOT_PLANNED = auto()
+    OPEN = Color.from_rgb(63, 185, 80)
+    CLOSED = Color.from_rgb(171, 125, 248)
+    NOT_PLANNED = Color.from_rgb(145, 152, 161)
+
+    def __init__(self, color: Color):
+        self.color = color
 
     @classmethod
     def of(cls, issue: Issue) -> IssueState:
@@ -26,22 +28,15 @@ class IssueState(Enum):
             case _:
                 return IssueState.CLOSED
 
-    @cached_property
-    def color(self):
-        match self:
-            case IssueState.OPEN:
-                return Color.from_rgb(63, 185, 80)
-            case IssueState.CLOSED:
-                return Color.from_rgb(171, 125, 248)
-            case IssueState.NOT_PLANNED:
-                return Color.from_rgb(145, 152, 161)
-
 
 class PullRequestState(Enum):
-    OPEN = auto()
-    DRAFT = auto()
-    MERGED = auto()
-    CLOSED = auto()
+    OPEN = Color.from_rgb(63, 185, 80)
+    DRAFT = Color.from_rgb(145, 152, 161)
+    MERGED = Color.from_rgb(171, 125, 248)
+    CLOSED = Color.from_rgb(248, 81, 73)
+
+    def __init__(self, color: Color):
+        self.color = color
 
     @overload
     @classmethod
@@ -78,36 +73,15 @@ class PullRequestState(Enum):
             case _:
                 return PullRequestState.CLOSED
 
-    @cached_property
-    def color(self):
-        match self:
-            case PullRequestState.OPEN:
-                return Color.from_rgb(63, 185, 80)
-            case PullRequestState.DRAFT:
-                return Color.from_rgb(145, 152, 161)
-            case PullRequestState.MERGED:
-                return Color.from_rgb(171, 125, 248)
-            case PullRequestState.CLOSED:
-                return Color.from_rgb(248, 81, 73)
-
 
 class CommitCheckState(Enum):
-    SUCCESS = auto()
-    FAILURE = auto()
-    PENDING = auto()
-    NEUTRAL = auto()
+    SUCCESS = Color.from_rgb(35, 134, 54)
+    FAILURE = Color.from_rgb(218, 54, 51)
+    PENDING = Color.from_rgb(158, 106, 3)
+    NEUTRAL = None
 
-    @cached_property
-    def color(self):
-        match self:
-            case CommitCheckState.SUCCESS:
-                return Color.from_rgb(35, 134, 54)
-            case CommitCheckState.FAILURE:
-                return Color.from_rgb(218, 54, 51)
-            case CommitCheckState.PENDING:
-                return Color.from_rgb(158, 106, 3)
-            case CommitCheckState.NEUTRAL:
-                return None
+    def __init__(self, color: Color | None):
+        self.color = color
 
 
 @dataclass
