@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum, auto
 from functools import cached_property
-from typing import Any, Awaitable, Callable, List, Self, cast
+from typing import Any, Awaitable, Callable, List, Self, cast, overload
 
 from discord import Color
 from githubkit import Paginator, Response
-from githubkit.rest import Issue, PullRequest
+from githubkit.rest import Issue, IssuePropPullRequest, PullRequest
 
 
 class IssueState(Enum):
@@ -42,15 +43,38 @@ class PullRequestState(Enum):
     MERGED = auto()
     CLOSED = auto()
 
+    @overload
     @classmethod
-    def of(cls, pr: PullRequest) -> PullRequestState:
+    def of(cls, pr: Issue) -> PullRequestState | None: ...
+
+    @overload
+    @classmethod
+    def of(cls, pr: PullRequest) -> PullRequestState: ...
+
+    @classmethod
+    def of(cls, pr: Issue | PullRequest) -> PullRequestState | None:
         match pr:
-            case PullRequest(state="open", draft=True):
+            case Issue() if not pr.pull_request:
+                return None
+
+            case (
+                Issue(state="open", draft=True)
+                | PullRequest(state="open", draft=True)
+            ):
                 return PullRequestState.DRAFT
-            case PullRequest(state="open"):
+
+            case Issue(state="open") | PullRequest(state="open"):
                 return PullRequestState.OPEN
-            case PullRequest(state="closed", merged=True):
+
+            case (
+                Issue(
+                    state="closed",
+                    pull_request=IssuePropPullRequest(merged_at=datetime()),
+                )
+                | PullRequest(state="closed", merged=True)
+            ):
                 return PullRequestState.MERGED
+
             case _:
                 return PullRequestState.CLOSED
 
@@ -179,3 +203,9 @@ async def gh_request[T](future: Awaitable[Response[T]]) -> T:
 
 def shorten_sha(sha: str):
     return sha[:10]
+
+
+def issue_or_pr_state(issue: Issue | PullRequest) -> IssueState | PullRequestState:
+    if isinstance(issue, PullRequest):
+        return PullRequestState.of(issue)
+    return PullRequestState.of(issue) or IssueState.of(issue)

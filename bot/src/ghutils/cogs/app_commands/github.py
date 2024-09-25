@@ -14,7 +14,7 @@ from discord.ext.commands import GroupCog
 from discord.ui import Button, View
 from githubkit import GitHub
 from githubkit.exception import GitHubException
-from githubkit.rest import Issue, PullRequest, SimpleUser
+from githubkit.rest import Issue, IssuePropPullRequest, PullRequest, SimpleUser
 from more_itertools import consecutive_groups, ilen
 from yarl import URL
 
@@ -397,12 +397,13 @@ def _discord_date(timestamp: int | float | datetime):
 
 def _create_issue_embed(repo: RepositoryName, issue: Issue | PullRequest):
     match issue:
+        case Issue(pull_request=IssuePropPullRequest()) | PullRequest():
+            issue_type = "PR"
+            state = PullRequestState.of(issue)
+            assert state
         case Issue():
             issue_type = "Issue"
             state = IssueState.of(issue)
-        case PullRequest():
-            issue_type = "PR"
-            state = PullRequestState.of(issue)
 
     embed = Embed(
         title=truncate_str(f"[{issue_type} #{issue.number}] {issue.title}", 256),
