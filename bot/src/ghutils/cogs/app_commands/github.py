@@ -15,9 +15,10 @@ from discord.ui import Button, View
 from githubkit import GitHub
 from githubkit.exception import GitHubException
 from githubkit.rest import Issue, PullRequest, SimpleUser
-from more_itertools import consecutive_groups
+from more_itertools import consecutive_groups, ilen
 from yarl import URL
 
+from ghutils.common.__version__ import VERSION
 from ghutils.core.cog import GHUtilsCog, SubGroup
 from ghutils.core.types import LoginState, NotLoggedInError
 from ghutils.db.models import (
@@ -215,38 +216,54 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
     ):
         """Show information about GitHub Utils."""
 
-        embed = Embed(
-            title="Bot Status",
-            color=Color.green(),
-        )
+        if info := self.env.deployment:
+            color = Color.green()
+            commit_url = f"https://github.com/object-Object/discord-github-utils/commit/{info.commit_sha}"
+            commit_info = textwrap.dedent(
+                f"""\
+                    [{info.short_commit_sha}]({commit_url}): {info.commit_message}
+                    {_discord_date(info.commit_timestamp)}"""
+            )
+            deployment_time_info = _discord_date(info.timestamp)
+        else:
+            color = Color.orange()
+            commit_info = "Unknown"
+            deployment_time_info = "Unknown"
 
-        commands = list(self.bot.tree.walk_commands())
-
-        if deployment := self.env.deployment:
-            commit_url = f"https://github.com/object-Object/discord-github-utils/commit/{deployment.commit_sha}"
-            embed.add_field(
-                name="Commit",
-                value=textwrap.dedent(
-                    f"""\
-                    [{shorten_sha(deployment.commit_sha)}]({commit_url}): {deployment.commit_message}
-                    {_discord_date(deployment.commit_timestamp)}"""
-                ),
+        embed = (
+            Embed(
+                title="Bot Status",
+                color=color,
+            )
+            .set_footer(text=f"v{VERSION}")
+            .add_field(
+                name="Deployed commit",
+                value=commit_info,
                 inline=False,
             )
-            embed.add_field(
-                name="Latest deployment",
-                value=_discord_date(deployment.timestamp),
+            .add_field(
+                name="Deployment time",
+                value=deployment_time_info,
                 inline=False,
             )
-
-        embed.add_field(
-            name="Latest restart",
-            value=_discord_date(self.bot.start_time),
-            inline=False,
+            .add_field(
+                name="Uptime",
+                value=_discord_date(self.bot.start_time),
+                inline=False,
+            )
+            .add_field(
+                name="Servers",
+                value=f"{len(self.bot.guilds)}",
+            )
+            .add_field(
+                name="Cogs",
+                value=f"{len(self.bot.cogs)}",
+            )
+            .add_field(
+                name="Commands",
+                value=f"{ilen(self.bot.tree.walk_commands())}",
+            )
         )
-        embed.add_field(name="Servers", value=f"{len(self.bot.guilds)}")
-        embed.add_field(name="Cogs", value=f"{len(self.bot.cogs)}")
-        embed.add_field(name="Commands", value=f"{len(commands)}")
 
         await respond_with_visibility(interaction, visibility, embed=embed)
 

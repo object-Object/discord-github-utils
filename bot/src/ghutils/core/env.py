@@ -10,6 +10,7 @@ from pydantic_settings import BaseSettings as PydanticBaseSettings, SettingsConf
 from yarl import URL
 
 from ghutils.db.models import UserGitHubTokens
+from ghutils.utils.github import shorten_sha
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +81,10 @@ class DeploymentSettings(BaseSettings, env_prefix="deployment__"):
     commit_sha: str
     commit_timestamp: datetime
     commit_message: str
+
+    @property
+    def short_commit_sha(self):
+        return shorten_sha(self.commit_sha)
 
 
 class GHUtilsEnv(BaseSettings):
