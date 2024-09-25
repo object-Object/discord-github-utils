@@ -26,7 +26,7 @@ class SyncCog(GHUtilsCog):
 
         await ctx.reply("Synced guild slash commands to this guild.")
 
-    @sync.command(name="all", alias=["global"])
+    @sync.command(name="all", aliases=["global"])
     async def sync_all(self, ctx: GHUtilsContext):
         """Sync global slash commands to all guilds."""
 
@@ -48,7 +48,7 @@ class SyncCog(GHUtilsCog):
 
         await ctx.reply("Removed guild slash commands from this guild.")
 
-    @clear.command(name="all", alias=["global"])
+    @clear.command(name="all", aliases=["global"])
     async def clear_all(self, ctx: GHUtilsContext):
         """Sync global slash commands to all guilds."""
 
