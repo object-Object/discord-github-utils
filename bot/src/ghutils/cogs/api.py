@@ -126,6 +126,7 @@ class APICog(GHUtilsCog):
     server: Server | None = field(default=None, init=False)
 
     async def cog_load(self):
+        await super().cog_load()
         app.state.bot = self.bot
         self.server = Server(
             Config(
