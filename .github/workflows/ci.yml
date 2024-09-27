@@ -145,7 +145,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           npm-packages: aws-cdk
-          role-to-assume: default
+          role-to-assume: repo
 
       - name: Download synth artifact
         uses: actions/download-artifact@v4

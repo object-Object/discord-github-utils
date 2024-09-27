@@ -119,7 +119,7 @@ more-itertools==10.5.0
 multidict==6.0.5
     # via aiohttp
     # via yarl
-object-ci @ git+https://github.com/object-Object/ci@d49aad2be03e0c6995be20d505d32aa54a6b7f89
+object-ci @ git+https://github.com/object-Object/ci@6c2cba42668b4c632a1368adb5034e733cb6cc0a
     # via ghutils-infrastructure
 orjson==3.10.5
     # via fastapi
