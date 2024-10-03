@@ -10,11 +10,14 @@ from discord.app_commands import (
     TransformerError,
 )
 
-from ghutils.core.types import NotLoggedInError
+from .types import NotLoggedInError, SilentError
 
 
 class GHUtilsCommandTree(CommandTree):
     async def on_error(self, interaction: Interaction, error: AppCommandError):
+        if isinstance(error, SilentError):
+            return
+
         if interaction.response.is_done():
             await super().on_error(interaction, error)
             return
