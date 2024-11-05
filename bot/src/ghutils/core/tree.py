@@ -10,7 +10,7 @@ from discord.app_commands import (
     TransformerError,
 )
 
-from .types import InvalidInputError, NotLoggedInError, SilentError
+from .exceptions import InvalidInputError, NotLoggedInError, SilentError
 
 
 class GHUtilsCommandTree(CommandTree):

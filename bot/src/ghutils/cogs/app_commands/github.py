@@ -20,7 +20,8 @@ from yarl import URL
 
 from ghutils.common.__version__ import VERSION
 from ghutils.core.cog import GHUtilsCog, SubGroup
-from ghutils.core.types import InvalidInputError, LoginState, NotLoggedInError
+from ghutils.core.exceptions import InvalidInputError, NotLoggedInError
+from ghutils.core.types import LoginState
 from ghutils.db.models import (
     UserGitHubTokens,
     UserLogin,
