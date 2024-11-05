@@ -10,7 +10,7 @@ from discord.app_commands import (
     TransformerError,
 )
 
-from .types import NotLoggedInError, SilentError
+from .types import InvalidInputError, NotLoggedInError, SilentError
 
 
 class GHUtilsCommandTree(CommandTree):
@@ -35,6 +35,14 @@ class GHUtilsCommandTree(CommandTree):
             ):
                 embed.title = "Invalid input!"
                 embed.description = f"Failed to convert value from `{opt_type.name}` to `{transformer_name}`."
+                embed.add_field(
+                    name="Value",
+                    value=str(value),
+                    inline=False,
+                )
+            case InvalidInputError(value=value, message=message):
+                embed.title = "Invalid input!"
+                embed.description = message
                 embed.add_field(
                     name="Value",
                     value=str(value),

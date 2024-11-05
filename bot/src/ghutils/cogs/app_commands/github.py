@@ -13,14 +13,14 @@ from discord.app_commands import Range
 from discord.ext.commands import GroupCog
 from discord.ui import Button, View
 from githubkit import GitHub
-from githubkit.exception import GitHubException
+from githubkit.exception import GitHubException, RequestFailed
 from githubkit.rest import Issue, IssuePropPullRequest, PullRequest, SimpleUser
 from more_itertools import consecutive_groups, ilen
 from yarl import URL
 
 from ghutils.common.__version__ import VERSION
 from ghutils.core.cog import GHUtilsCog, SubGroup
-from ghutils.core.types import LoginState, NotLoggedInError
+from ghutils.core.types import InvalidInputError, LoginState, NotLoggedInError
 from ghutils.db.models import (
     UserGitHubTokens,
     UserLogin,
@@ -297,14 +297,22 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
                 if ref is None:
                     ref = repo.default_branch
 
-                tree = await gh_request(
-                    github.rest.git.async_get_tree(
-                        repo.owner.login,
-                        repo.name,
-                        ref,
-                        recursive="1",
+                try:
+                    tree = await gh_request(
+                        github.rest.git.async_get_tree(
+                            repo.owner.login,
+                            repo.name,
+                            ref,
+                            recursive="1",
+                        )
                     )
-                )
+                except RequestFailed as e:
+                    if e.response.status_code == 404:  # pyright: ignore[reportUnknownMemberType]
+                        raise InvalidInputError(
+                            value=ref,
+                            message=f"Ref does not exist in `{repo.full_name}`.",
+                        )
+                    raise
 
                 sha = tree.sha[:12]
                 tree_dict = {item.path: item for item in tree.tree if item.path}
