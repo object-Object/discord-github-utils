@@ -78,7 +78,10 @@ class UserConfigCog(GHUtilsCog, GroupCog, group_name="gh_config"):
                 session.add(config)
                 session.commit()
 
-            await interaction.response.send_message("ok", ephemeral=True)
+            await interaction.response.send_message(
+                "Reset all config options to their default values.",
+                ephemeral=True,
+            )
 
     class Set(SubGroup):
         """Change the value of config options for your account."""
