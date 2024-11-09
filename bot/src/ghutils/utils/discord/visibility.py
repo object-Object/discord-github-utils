@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from re import Match
 from typing import Any, Literal, Self
 
@@ -59,7 +60,16 @@ class MessageContents:
         if visibility == "private":
             return PrivateView(interaction, self)
 
-        view = View(timeout=None).add_item(DeleteButton(interaction.user.id))
+        view = View(timeout=None)
+
+        # we can't delete our own messages if the user is running this in a place where
+        # the bot hasn't been added
+        if interaction.is_guild_integration():
+            view.add_item(PermanentDeleteButton(interaction.user.id))
+        else:
+            view.add_item(TemporaryDeleteButton(interaction))
+            view.timeout = (interaction.expires_at - datetime.now(UTC)).total_seconds()
+
         if show_user:
             match self.command:
                 case Command(qualified_name=command_name):
@@ -74,6 +84,7 @@ class MessageContents:
                     disabled=True,
                 )
             )
+
         return view
 
 
@@ -92,10 +103,17 @@ class PrivateView(View):
 
 
 @dataclass
-class DeleteButton(
+class PermanentDeleteButton(
     DynamicItem[Button[Any]],
     template=r"DeleteButton:user:(?P<id>[0-9]+)",
 ):
+    """A button that deletes its message when pressed by the user who created it.
+
+    Only works in guilds where the bot has been installed! Otherwise we get an error
+    (`403 Forbidden (error code: 50001): Missing Access`) when trying to delete the
+    message.
+    """
+
     user_id: int
 
     def __post_init__(self):
@@ -124,3 +142,23 @@ class DeleteButton(
             await interaction.message.delete()
         else:
             await interaction.response.defer()
+
+
+@dataclass
+class TemporaryDeleteButton(Button[Any]):
+    """A button that deletes the original interaction's message when pressed by the user
+    who created it.
+
+    Will stop working after 15 minutes (ie. when the interaction expires), or when the
+    bot restarts.
+    """
+
+    original_interaction: Interaction
+
+    def __post_init__(self):
+        super().__init__(emoji="🗑️")
+
+    async def callback(self, interaction: Interaction):
+        await interaction.response.defer()
+        if interaction.user == self.original_interaction.user:
+            await self.original_interaction.delete_original_response()
