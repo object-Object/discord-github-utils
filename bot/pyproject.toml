@@ -17,6 +17,7 @@ dependencies = [
     "githubkit[auth-app]>=0.11.8",
     "pfzy>=0.3.4",
     "more-itertools>=10.5.0",
+    "fluent-runtime>=0.4.0",
 ]
 
 [tool.rye]

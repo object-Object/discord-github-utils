@@ -16,6 +16,7 @@ from ghutils.db.models import UserGitHubTokens
 from ghutils.utils.imports import iter_modules
 
 from .env import GHUtilsEnv
+from .translator import GHUtilsTranslator
 from .tree import GHUtilsCommandTree
 from .types import LoginState
 
@@ -59,6 +60,10 @@ class GHUtilsBot(Bot):
     @classmethod
     def github_app_of(cls, interaction: Interaction):
         return cls.of(interaction).github_app(interaction)
+
+    async def load_translator(self):
+        logger.info("Loading translator")
+        await self.tree.set_translator(GHUtilsTranslator())
 
     async def load_cogs(self):
         for cog in iter_modules(cogs, skip_internal=True):

@@ -27,6 +27,7 @@ anyio==4.4.0
 attrs==23.2.0
     # via aiohttp
     # via cattrs
+    # via fluent-runtime
     # via jsii
 aws-cdk-asset-awscli-v1==2.2.202
     # via aws-cdk-lib
@@ -43,6 +44,8 @@ aws-cdk-lib==2.158.0
     # via aws-cdk-github-oidc
     # via ghutils-infrastructure
     # via object-ci
+babel==2.16.0
+    # via fluent-runtime
 cattrs==23.2.3
     # via jsii
 certifi==2024.6.2
@@ -71,6 +74,10 @@ fastapi==0.111.0
     # via ghutils-bot
 fastapi-cli==0.0.4
     # via fastapi
+fluent-runtime==0.4.0
+    # via ghutils-bot
+fluent-syntax==0.19.0
+    # via fluent-runtime
 frozenlist==1.4.1
     # via aiohttp
     # via aiosignal
@@ -159,6 +166,8 @@ python-dotenv==1.0.1
     # via uvicorn
 python-multipart==0.0.9
     # via fastapi
+pytz==2024.2
+    # via fluent-runtime
 pyyaml==6.0.1
     # via uvicorn
 rich==13.7.1
@@ -189,6 +198,8 @@ typer==0.12.3
     # via fastapi-cli
 typing-extensions==4.12.2
     # via fastapi
+    # via fluent-runtime
+    # via fluent-syntax
     # via githubkit
     # via hishel
     # via jsii

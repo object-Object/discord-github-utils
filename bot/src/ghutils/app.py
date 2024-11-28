@@ -11,6 +11,7 @@ async def main():
     env = GHUtilsEnv.get()
     async with GHUtilsBot(env) as bot:
         create_db_and_tables(bot.engine)
+        await bot.load_translator()
         await bot.load_cogs()
         await bot.start(env.token.get_secret_value())
 
