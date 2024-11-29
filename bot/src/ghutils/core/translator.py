@@ -32,5 +32,5 @@ class GHUtilsTranslator(Translator):
         locale: Locale,
         context: TranslationContextTypes,
     ) -> str | None:
-        l10n = self.l10n[locale]
-        return l10n.format_value(string.extras["id"])
+        msg_id = string.extras.get("id", string.message)
+        return self.l10n[locale].format_value(msg_id, string.extras)

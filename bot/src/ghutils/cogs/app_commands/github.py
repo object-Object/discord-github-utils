@@ -26,6 +26,7 @@ from ghutils.db.models import (
     UserGitHubTokens,
     UserLogin,
 )
+from ghutils.utils import l10n
 from ghutils.utils.discord.embeds import set_embed_author
 from ghutils.utils.discord.references import (
     CommitReference,
@@ -53,48 +54,54 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
 
     # /gh
 
-    @app_commands.command()
+    @app_commands.command(
+        description=l10n.command_description("gh issue"),
+    )
     @app_commands.rename(reference="issue")
+    @l10n.describe(gh_issue=["reference"])
+    @l10n.describe_common("visibility")
     async def issue(
         self,
         interaction: Interaction,
         reference: IssueReference,
         visibility: MessageVisibility = "private",
     ):
-        """Get a link to a GitHub issue."""
-
         await respond_with_visibility(
             interaction,
             visibility,
             embed=_create_issue_embed(*reference),
         )
 
-    @app_commands.command()
+    @app_commands.command(
+        description=l10n.command_description("gh pr"),
+    )
     @app_commands.rename(reference="pr")
+    @l10n.describe(gh_pr=["reference"])
+    @l10n.describe_common("visibility")
     async def pr(
         self,
         interaction: Interaction,
         reference: PRReference,
         visibility: MessageVisibility = "private",
     ):
-        """Get a link to a GitHub pull request."""
-
         await respond_with_visibility(
             interaction,
             visibility,
             embed=_create_issue_embed(*reference),
         )
 
-    @app_commands.command()
+    @app_commands.command(
+        description=l10n.command_description("gh commit"),
+    )
     @app_commands.rename(reference="commit")
+    @l10n.describe(gh_commit=["reference"])
+    @l10n.describe_common("visibility")
     async def commit(
         self,
         interaction: Interaction,
         reference: CommitReference,
         visibility: MessageVisibility = "private",
     ):
-        """Get a link to a GitHub commit."""
-
         repo, commit = reference
 
         async with self.bot.github_app(interaction) as (github, _):
@@ -128,15 +135,17 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
 
         await respond_with_visibility(interaction, visibility, embed=embed)
 
-    @app_commands.command()
+    @app_commands.command(
+        description=l10n.command_description("gh repo"),
+    )
+    @l10n.describe(gh_repo=["repo"])
+    @l10n.describe_common("visibility")
     async def repo(
         self,
         interaction: Interaction,
         repo: FullRepositoryOption,
         visibility: MessageVisibility = "private",
     ):
-        """Get a link to a GitHub repository."""
-
         async with self.bot.github_app(interaction) as (github, _):
             result = await github.async_graphql(
                 """
@@ -164,10 +173,10 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
 
         await respond_with_visibility(interaction, visibility, embed=embed)
 
-    @app_commands.command()
+    @app_commands.command(
+        description=l10n.command_description("gh login"),
+    )
     async def login(self, interaction: Interaction):
-        """Authorize GitHub Utils to make requests on behalf of your GitHub account."""
-
         user_id = interaction.user.id
         login_id = str(uuid.uuid4())
 
@@ -188,10 +197,10 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
             ephemeral=True,
         )
 
-    @app_commands.command()
+    @app_commands.command(
+        description=l10n.command_description("gh logout"),
+    )
     async def logout(self, interaction: Interaction):
-        """Remove your GitHub account from GitHub Utils."""
-
         with self.bot.db_session() as session:
             # TODO: this should delete the authorization too, but idk how
             # https://docs.github.com/en/rest/apps/oauth-applications?apiVersion=2022-11-28#delete-an-app-authorization
@@ -209,14 +218,15 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
                     ephemeral=True,
                 )
 
-    @app_commands.command()
+    @app_commands.command(
+        description=l10n.command_description("gh status"),
+    )
+    @l10n.describe_common("visibility")
     async def status(
         self,
         interaction: Interaction,
         visibility: MessageVisibility = "private",
     ):
-        """Show information about GitHub Utils."""
-
         if info := self.env.deployment:
             color = Color.green()
             commit_url = f"https://github.com/object-Object/discord-github-utils/commit/{info.commit_sha}"
@@ -268,10 +278,12 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
 
         await respond_with_visibility(interaction, visibility, embed=embed)
 
-    class Search(SubGroup):
-        """Search for things on GitHub."""
-
-        @app_commands.command()
+    class Search(SubGroup, description=l10n.command_description("gh search")):
+        @app_commands.command(
+            description=l10n.command_description("gh search files"),
+        )
+        @l10n.describe(gh_search_files=["repo", "query", "ref", "exact", "limit"])
+        @l10n.describe_common("visibility")
         async def files(
             self,
             interaction: Interaction,
@@ -282,15 +294,6 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
             limit: Range[int, 1, 25] = 5,
             visibility: MessageVisibility = "private",
         ):
-            """Search for files in a repository by name.
-
-            Args:
-                ref: Branch name, tag name, or commit to search in. Defaults to the
-                    default branch of the repo.
-                exact: If true, use exact search; otherwise use fuzzy search.
-                limit: Maximum number of results to show.
-            """
-
             async with self.bot.github_app(interaction) as (github, state):
                 if state != LoginState.LOGGED_IN:
                     raise NotLoggedInError()
