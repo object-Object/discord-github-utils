@@ -54,11 +54,8 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
 
     # /gh
 
-    @app_commands.command(
-        description=l10n.command_description("gh issue"),
-    )
+    @app_commands.command()
     @app_commands.rename(reference="issue")
-    @l10n.describe(gh_issue=["reference"])
     @l10n.describe_common("visibility")
     async def issue(
         self,
@@ -72,11 +69,8 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
             embed=_create_issue_embed(*reference),
         )
 
-    @app_commands.command(
-        description=l10n.command_description("gh pr"),
-    )
+    @app_commands.command()
     @app_commands.rename(reference="pr")
-    @l10n.describe(gh_pr=["reference"])
     @l10n.describe_common("visibility")
     async def pr(
         self,
@@ -90,11 +84,8 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
             embed=_create_issue_embed(*reference),
         )
 
-    @app_commands.command(
-        description=l10n.command_description("gh commit"),
-    )
+    @app_commands.command()
     @app_commands.rename(reference="commit")
-    @l10n.describe(gh_commit=["reference"])
     @l10n.describe_common("visibility")
     async def commit(
         self,
@@ -135,10 +126,7 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
 
         await respond_with_visibility(interaction, visibility, embed=embed)
 
-    @app_commands.command(
-        description=l10n.command_description("gh repo"),
-    )
-    @l10n.describe(gh_repo=["repo"])
+    @app_commands.command()
     @l10n.describe_common("visibility")
     async def repo(
         self,
@@ -173,9 +161,7 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
 
         await respond_with_visibility(interaction, visibility, embed=embed)
 
-    @app_commands.command(
-        description=l10n.command_description("gh login"),
-    )
+    @app_commands.command()
     async def login(self, interaction: Interaction):
         user_id = interaction.user.id
         login_id = str(uuid.uuid4())
@@ -197,9 +183,7 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
             ephemeral=True,
         )
 
-    @app_commands.command(
-        description=l10n.command_description("gh logout"),
-    )
+    @app_commands.command()
     async def logout(self, interaction: Interaction):
         with self.bot.db_session() as session:
             # TODO: this should delete the authorization too, but idk how
@@ -218,9 +202,7 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
                     ephemeral=True,
                 )
 
-    @app_commands.command(
-        description=l10n.command_description("gh status"),
-    )
+    @app_commands.command()
     @l10n.describe_common("visibility")
     async def status(
         self,
@@ -278,11 +260,8 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
 
         await respond_with_visibility(interaction, visibility, embed=embed)
 
-    class Search(SubGroup, description=l10n.command_description("gh search")):
-        @app_commands.command(
-            description=l10n.command_description("gh search files"),
-        )
-        @l10n.describe(gh_search_files=["repo", "query", "ref", "exact", "limit"])
+    class Search(SubGroup):
+        @app_commands.command()
         @l10n.describe_common("visibility")
         async def files(
             self,
