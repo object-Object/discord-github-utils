@@ -27,6 +27,8 @@ rye run setup
    * Where can this GitHub App be installed: Only on this account
 2. Generate and copy a new client secret.
 3. Generate and download a new private key.
+4. [Install the GitHub app](https://docs.github.com/en/apps/using-github-apps/installing-your-own-github-app) on a repository, eg. your fork of this repo.
+5. [Copy the installation ID](https://stackoverflow.com/questions/74462420/where-can-we-find-github-apps-installation-id) (this is the `GITHUB__DEFAULT_INSTALLATION_ID` value, used for making requests on behalf of users who are not logged in).
 
 ### Environment variables
 
