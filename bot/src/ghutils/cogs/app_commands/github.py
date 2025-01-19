@@ -33,7 +33,7 @@ from ghutils.utils.discord.references import (
     IssueReference,
     PRReference,
 )
-from ghutils.utils.discord.transformers import FullRepositoryOption
+from ghutils.utils.discord.transformers import FullRepositoryOption, UserOption
 from ghutils.utils.discord.visibility import MessageVisibility, respond_with_visibility
 from ghutils.utils.github import (
     CommitCheckState,
@@ -158,6 +158,55 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
             url=image_url,
         )
         set_embed_author(embed, repo.owner)
+
+        await respond_with_visibility(interaction, visibility, embed=embed)
+
+    @app_commands.command()
+    @l10n.describe_common("visibility")
+    async def user(
+        self,
+        interaction: Interaction,
+        user: UserOption,
+        visibility: MessageVisibility = "private",
+    ):
+        # Use GraphQL to get # of repos starred by user...?
+        async with self.bot.github_app(interaction) as (github, _):
+            result = await github.async_graphql(
+                """
+                query($username: String!) {
+                    user(login: $username) {
+                        starredRepositories {
+                        totalCount
+                        }
+                    }
+                }
+                """,
+                {
+                    "username": user.login,
+                },
+            )
+            num_stars: int = result["user"]["starredRepositories"]["totalCount"]
+
+        embed = (
+            Embed(
+                description=user.bio,
+                url=user.html_url,
+            )
+            .set_thumbnail(url=user.avatar_url)
+            .add_field(name="Repositories", value=user.public_repos, inline=True)
+            .add_field(name="Stars", value=num_stars, inline=True)
+        )
+
+        # In case user doesn't have a display name
+        if user.name is None:
+            embed.title = user.login
+        else:
+            embed.title = user.name
+            embed.set_author(name=user.login)
+
+        embed.set_footer(
+            text=f"{user.followers} followers • {user.following} following"
+        )
 
         await respond_with_visibility(interaction, visibility, embed=embed)
 
