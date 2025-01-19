@@ -89,10 +89,10 @@ class UserTransformer(Transformer):
             except GitHubException as e:
                 match e:
                     case RequestFailed(response=Response(status_code=404)):
-                        raise ValueError("Repository not found")
+                        raise ValueError("User not found")
                     case _:
                         logger.warning(e)
-                        raise ValueError(f"Failed to get repository: {e}")
+                        raise ValueError(f"Failed to get user: {e}")
 
     async def autocomplete(  # pyright: ignore[reportIncompatibleMethodOverride]
         self, interaction: Interaction, value: str
@@ -100,6 +100,11 @@ class UserTransformer(Transformer):
         async with GHUtilsBot.github_app_of(interaction) as (github, state):
             if state != LoginState.LOGGED_IN:
                 return []
+
+            # If no value given, assume the user wants their own profile
+            if not value:
+                user = await gh_request(github.rest.users.async_get_authenticated())
+                return [Choice(name=user.login, value=user.login)]
 
             try:
                 result = await gh_request(
