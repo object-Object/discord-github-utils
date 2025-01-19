@@ -26,7 +26,6 @@ from ghutils.db.models import (
     UserGitHubTokens,
     UserLogin,
 )
-from ghutils.utils import l10n
 from ghutils.utils.discord.embeds import set_embed_author
 from ghutils.utils.discord.references import (
     CommitReference,
@@ -56,7 +55,6 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
 
     @app_commands.command()
     @app_commands.rename(reference="issue")
-    @l10n.describe_common("visibility")
     async def issue(
         self,
         interaction: Interaction,
@@ -71,7 +69,6 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
 
     @app_commands.command()
     @app_commands.rename(reference="pr")
-    @l10n.describe_common("visibility")
     async def pr(
         self,
         interaction: Interaction,
@@ -86,7 +83,6 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
 
     @app_commands.command()
     @app_commands.rename(reference="commit")
-    @l10n.describe_common("visibility")
     async def commit(
         self,
         interaction: Interaction,
@@ -127,7 +123,6 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
         await respond_with_visibility(interaction, visibility, embed=embed)
 
     @app_commands.command()
-    @l10n.describe_common("visibility")
     async def repo(
         self,
         interaction: Interaction,
@@ -162,7 +157,6 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
         await respond_with_visibility(interaction, visibility, embed=embed)
 
     @app_commands.command()
-    @l10n.describe_common("visibility")
     async def user(
         self,
         interaction: Interaction,
@@ -252,7 +246,6 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
                 )
 
     @app_commands.command()
-    @l10n.describe_common("visibility")
     async def status(
         self,
         interaction: Interaction,
@@ -311,7 +304,6 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
 
     class Search(SubGroup):
         @app_commands.command()
-        @l10n.describe_common("visibility")
         async def files(
             self,
             interaction: Interaction,

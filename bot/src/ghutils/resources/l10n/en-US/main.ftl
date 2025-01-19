@@ -6,7 +6,7 @@
 
 # common parameters
 
-parameter-description_common_visibility =
+-parameter-description_visibility =
     Whether the message should be visible to everyone, or just you.
 
 # /gh issue
@@ -17,6 +17,9 @@ command-description_gh-issue =
 parameter-description_gh-issue_reference =
     Issue to look up (`owner/repo#123` or `#123`). Use `/gh login` to get autocomplete.
 
+parameter-description_gh-issue_visibility =
+    {-parameter-description_visibility}
+
 # /gh pr
 
 command-description_gh-pr =
@@ -24,6 +27,9 @@ command-description_gh-pr =
 
 parameter-description_gh-pr_reference =
     Pull request to look up (`owner/repo#123` or `#123`). Use `/gh login` to get autocomplete.
+
+parameter-description_gh-pr_visibility =
+    {-parameter-description_visibility}
 
 # /gh commit
 
@@ -33,15 +39,24 @@ command-description_gh-commit =
 parameter-description_gh-commit_reference =
     Commit SHA to look up (`owner/repo@sha` or `@sha`). Use `/gh login` to get autocomplete.
 
+parameter-description_gh-commit_visibility =
+    {-parameter-description_visibility}
+
 # /gh repo
 
 command-description_gh-repo =
     Get a link to a GitHub repository.
 
+parameter-description_gh-repo_visibility =
+    {-parameter-description_visibility}
+
 # /gh user
 
 command-description_gh-user =
     Get a link to a GitHub user.
+
+parameter-description_gh-user_visibility =
+    {-parameter-description_visibility}
 
 # /gh login
 
@@ -57,6 +72,9 @@ command-description_gh-logout =
 
 command-description_gh-status =
     Show information about GitHub Utils.
+
+parameter-description_gh-status_visibility =
+    {-parameter-description_visibility}
 
 # /gh search
 
@@ -82,3 +100,6 @@ parameter-description_gh-search-files_exact =
 
 parameter-description_gh-search-files_limit =
     Maximum number of results to show.
+
+parameter-description_gh-search-files_visibility =
+    {-parameter-description_visibility}
