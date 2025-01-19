@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
 
 from discord import Interaction
 from discord.app_commands import Transform, Transformer
@@ -19,9 +18,21 @@ from ..github import RepositoryName, gh_request
 logger = logging.getLogger(__name__)
 
 
-class RepositoryNameTransformer(Transformer):
-    async def transform(self, interaction: Interaction, value: str) -> Any:
-        return RepositoryName.parse(value)
+class RepositoryTransformer(Transformer):
+    async def transform(self, interaction: Interaction, value: str) -> FullRepository:
+        repo = RepositoryName.parse(value)
+        async with GHUtilsBot.github_app_of(interaction) as (github, _):
+            try:
+                return await gh_request(
+                    github.rest.repos.async_get(repo.owner, repo.repo)
+                )
+            except GitHubException as e:
+                match e:
+                    case RequestFailed(response=Response(status_code=404)):
+                        raise ValueError("Repository not found")
+                    case _:
+                        logger.warning(e)
+                        raise ValueError(f"Failed to get repository: {e}")
 
     async def autocomplete(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
@@ -64,25 +75,12 @@ class RepositoryNameTransformer(Transformer):
             ]
 
 
-class FullRepositoryTransformer(RepositoryNameTransformer):
-    async def transform(self, interaction: Interaction, value: str):
-        repo = RepositoryName.parse(value)
-        async with GHUtilsBot.github_app_of(interaction) as (github, _):
-            try:
-                return await gh_request(
-                    github.rest.repos.async_get(repo.owner, repo.repo)
-                )
-            except GitHubException as e:
-                match e:
-                    case RequestFailed(response=Response(status_code=404)):
-                        raise ValueError("Repository not found")
-                    case _:
-                        logger.warning(e)
-                        raise ValueError(f"Failed to get repository: {e}")
-
-
 class UserTransformer(Transformer):
-    async def transform(self, interaction: Interaction, value: str):
+    async def transform(
+        self,
+        interaction: Interaction,
+        value: str,
+    ) -> PrivateUser | PublicUser:
         async with GHUtilsBot.github_app_of(interaction) as (github, _):
             try:
                 return await gh_request(github.rest.users.async_get_by_username(value))
@@ -95,7 +93,9 @@ class UserTransformer(Transformer):
                         raise ValueError(f"Failed to get user: {e}")
 
     async def autocomplete(  # pyright: ignore[reportIncompatibleMethodOverride]
-        self, interaction: Interaction, value: str
+        self,
+        interaction: Interaction,
+        value: str,
     ) -> list[Choice[str]]:
         async with GHUtilsBot.github_app_of(interaction) as (github, state):
             if state != LoginState.LOGGED_IN:
@@ -122,8 +122,6 @@ class UserTransformer(Transformer):
             return [Choice(name=user.login, value=user.login) for user in result.items]
 
 
+RepositoryOption = Transform[FullRepository, RepositoryTransformer]
+
 UserOption = Transform[PrivateUser | PublicUser, UserTransformer]
-
-RepositoryNameOption = Transform[RepositoryName, RepositoryNameTransformer]
-
-FullRepositoryOption = Transform[FullRepository, FullRepositoryTransformer]

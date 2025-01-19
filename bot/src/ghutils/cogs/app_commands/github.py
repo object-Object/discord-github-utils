@@ -32,7 +32,7 @@ from ghutils.utils.discord.references import (
     IssueReference,
     PRReference,
 )
-from ghutils.utils.discord.transformers import FullRepositoryOption, UserOption
+from ghutils.utils.discord.transformers import RepositoryOption, UserOption
 from ghutils.utils.discord.visibility import MessageVisibility, respond_with_visibility
 from ghutils.utils.github import (
     CommitCheckState,
@@ -126,7 +126,7 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
     async def repo(
         self,
         interaction: Interaction,
-        repo: FullRepositoryOption,
+        repo: RepositoryOption,
         visibility: MessageVisibility = "private",
     ):
         async with self.bot.github_app(interaction) as (github, _):
@@ -307,7 +307,7 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
         async def files(
             self,
             interaction: Interaction,
-            repo: FullRepositoryOption,
+            repo: RepositoryOption,
             query: Range[str, 1, 128],
             ref: Range[str, 1, 255] | None = None,
             exact: bool = False,
