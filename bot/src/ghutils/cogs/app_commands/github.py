@@ -154,6 +154,7 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
             title=repo.full_name,
             description=repo.description,
             url=repo.html_url,
+            color=self.bot.get_language_color(repo.language or ""),
         ).set_image(
             url=image_url,
         )

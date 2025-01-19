@@ -181,7 +181,8 @@ python-multipart==0.0.9
     # via fastapi
 pytz==2024.2
     # via fluent-runtime
-pyyaml==6.0.1
+pyyaml==6.0.2
+    # via ghutils-bot
     # via pre-commit
     # via uvicorn
 rich==13.7.1

@@ -2,8 +2,10 @@ import logging
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 
-from discord import CustomActivity, Intents, Interaction
+import yaml
+from discord import Color, CustomActivity, Intents, Interaction
 from discord.app_commands import AppCommandContext, AppInstallationType
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, NoEntryPointError
@@ -13,6 +15,7 @@ from sqlmodel import Session, create_engine
 from ghutils import cogs
 from ghutils.common.__version__ import VERSION
 from ghutils.db.models import UserGitHubTokens
+from ghutils.resources import load_resource
 from ghutils.utils.imports import iter_modules
 
 from .env import GHUtilsEnv
@@ -46,6 +49,7 @@ class GHUtilsBot(Bot):
         )
         self.engine = create_engine(self.env.db_url)
         self.start_time = datetime.now()
+        self.language_colors = self._load_language_colors()
 
     @classmethod
     def of(cls, interaction: Interaction):
@@ -117,3 +121,20 @@ class GHUtilsBot(Bot):
 
     def _get_default_installation_app(self):
         return GitHub(self.env.gh.get_default_installation_auth())
+
+    def _load_language_colors(self) -> dict[str, Color]:
+        langs: dict[str, dict[str, Any]] = yaml.load(
+            load_resource("languages.yml"), Loader=yaml.CLoader
+        )
+
+        return {
+            language: Color.from_str(info["color"])
+            for language, info in langs.items()
+            if "color" in info
+        }
+
+    # i'm not allowed to add the u to colour smh
+    def get_language_color(self, language: str) -> Color:
+        gh_default: Color = Color.from_str("#1B1F24")
+
+        return self.language_colors.get(language, gh_default)
