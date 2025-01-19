@@ -123,6 +123,7 @@ class GHUtilsBot(Bot):
         return GitHub(self.env.gh.get_default_installation_auth())
 
     def _load_language_colors(self) -> dict[str, Color]:
+        logger.info("Loading repo language colors")
         langs: dict[str, dict[str, Any]] = yaml.load(
             load_resource("languages.yml"), Loader=yaml.CLoader
         )
