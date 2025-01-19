@@ -47,6 +47,9 @@ parameter-description_gh-commit_visibility =
 command-description_gh-repo =
     Get a link to a GitHub repository.
 
+parameter-description_gh-repo_repo =
+    Repository to look up (`owner/repo`). Use `/gh login` to get autocomplete.
+
 parameter-description_gh-repo_visibility =
     {-parameter-description_visibility}
 
@@ -54,6 +57,9 @@ parameter-description_gh-repo_visibility =
 
 command-description_gh-user =
     Get a link to a GitHub user.
+
+parameter-description_gh-repo_user =
+    Username to look up. Use `/gh login` to get autocomplete.
 
 parameter-description_gh-user_visibility =
     {-parameter-description_visibility}
