@@ -192,6 +192,7 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
                 description=user.bio,
                 url=user.html_url,
             )
+            .set_thumbnail(url=user.avatar_url)
             .add_field(name="Repositories", value=user.public_repos, inline=True)
             .add_field(name="Stars", value=num_stars, inline=True)
         )
