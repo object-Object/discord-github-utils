@@ -16,6 +16,7 @@ from githubkit import GitHub
 from githubkit.exception import GitHubException, RequestFailed
 from githubkit.rest import Issue, IssuePropPullRequest, PullRequest, SimpleUser
 from more_itertools import consecutive_groups, ilen
+from Pylette import extract_colors
 from yarl import URL
 
 from ghutils.common.__version__ import VERSION
@@ -188,10 +189,21 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
             )
             num_stars: int = result["user"]["starredRepositories"]["totalCount"]
 
+        # Pylette ints are actually int64s, thanks NumPy
+        user_rgb = [
+            int(val)
+            for val in extract_colors(
+                user.avatar_url, palette_size=1, sort_mode="frequency"
+            )
+            .colors[0]
+            .rgb
+        ]
+
         embed = (
             Embed(
                 description=user.bio,
                 url=user.html_url,
+                color=Color.from_rgb(*user_rgb),
             )
             .set_thumbnail(url=user.avatar_url)
             .add_field(name="Repositories", value=user.public_repos, inline=True)

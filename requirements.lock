@@ -51,8 +51,11 @@ cattrs==23.2.3
 certifi==2024.6.2
     # via httpcore
     # via httpx
+    # via requests
 cffi==1.17.0 ; platform_python_implementation != 'PyPy'
     # via cryptography
+charset-normalizer==3.4.1
+    # via requests
 click==8.1.7
     # via typer
     # via uvicorn
@@ -102,11 +105,14 @@ idna==3.7
     # via anyio
     # via email-validator
     # via httpx
+    # via requests
     # via yarl
 importlib-resources==6.4.5
     # via jsii
 jinja2==3.1.4
     # via fastapi
+joblib==1.4.2
+    # via scikit-learn
 jsii==1.103.1
     # via aws-cdk-asset-awscli-v1
     # via aws-cdk-asset-kubectl-v20
@@ -126,12 +132,18 @@ more-itertools==10.5.0
 multidict==6.0.5
     # via aiohttp
     # via yarl
+numpy==1.26.4
+    # via pylette
+    # via scikit-learn
+    # via scipy
 object-ci @ git+https://github.com/object-Object/ci@6c2cba42668b4c632a1368adb5034e733cb6cc0a
     # via ghutils-infrastructure
 orjson==3.10.5
     # via fastapi
 pfzy==0.3.4
     # via ghutils-bot
+pillow==10.4.0
+    # via pylette
 psycopg2-binary==2.9.9
     # via ghutils-bot
 publication==0.0.3
@@ -159,6 +171,8 @@ pygments==2.18.0
     # via rich
 pyjwt==2.9.0
     # via githubkit
+pylette==4.0.0
+    # via ghutils-bot
 python-dateutil==2.9.0.post0
     # via jsii
 python-dotenv==1.0.1
@@ -171,8 +185,14 @@ pytz==2024.2
 pyyaml==6.0.2
     # via ghutils-bot
     # via uvicorn
+requests==2.32.3
+    # via pylette
 rich==13.7.1
     # via typer
+scikit-learn==1.6.1
+    # via pylette
+scipy==1.15.1
+    # via scikit-learn
 shellingham==1.5.4
     # via typer
 six==1.16.0
@@ -186,6 +206,8 @@ sqlmodel==0.0.19
     # via ghutils-bot
 starlette==0.37.2
     # via fastapi
+threadpoolctl==3.5.0
+    # via scikit-learn
 typeguard==2.13.3
     # via aws-cdk-asset-awscli-v1
     # via aws-cdk-asset-kubectl-v20
@@ -195,8 +217,9 @@ typeguard==2.13.3
     # via aws-cdk-lib
     # via constructs
     # via jsii
-typer==0.12.3
+typer==0.12.5
     # via fastapi-cli
+    # via pylette
 typing-extensions==4.12.2
     # via fastapi
     # via fluent-runtime
@@ -210,6 +233,8 @@ typing-extensions==4.12.2
     # via typer
 ujson==5.10.0
     # via fastapi
+urllib3==2.3.0
+    # via requests
 uvicorn==0.30.1
     # via fastapi
 uvloop==0.20.0 ; platform_python_implementation != 'PyPy' and sys_platform != 'cygwin' and sys_platform != 'win32'
