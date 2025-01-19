@@ -40,10 +40,7 @@ class RepositoryTransformer(Transformer):
         value: str,
     ) -> list[Choice[str]]:
         value = value.strip()
-        if "/" in value:
-            owner, rest = value.split("/", maxsplit=1)
-            query = f"{rest} user:{owner} in:name fork:true"
-        elif value:
+        if value:
             query = f"{value} in:name fork:true"
         else:
             with GHUtilsBot.db_session_of(interaction) as session:
