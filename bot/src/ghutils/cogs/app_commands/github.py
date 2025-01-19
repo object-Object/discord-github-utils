@@ -27,14 +27,13 @@ from ghutils.db.models import (
     UserGitHubTokens,
     UserLogin,
 )
-from ghutils.utils import l10n
 from ghutils.utils.discord.embeds import set_embed_author
 from ghutils.utils.discord.references import (
     CommitReference,
     IssueReference,
     PRReference,
 )
-from ghutils.utils.discord.transformers import FullRepositoryOption, UserOption
+from ghutils.utils.discord.transformers import RepositoryOption, UserOption
 from ghutils.utils.discord.visibility import MessageVisibility, respond_with_visibility
 from ghutils.utils.github import (
     CommitCheckState,
@@ -57,7 +56,6 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
 
     @app_commands.command()
     @app_commands.rename(reference="issue")
-    @l10n.describe_common("visibility")
     async def issue(
         self,
         interaction: Interaction,
@@ -72,7 +70,6 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
 
     @app_commands.command()
     @app_commands.rename(reference="pr")
-    @l10n.describe_common("visibility")
     async def pr(
         self,
         interaction: Interaction,
@@ -87,7 +84,6 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
 
     @app_commands.command()
     @app_commands.rename(reference="commit")
-    @l10n.describe_common("visibility")
     async def commit(
         self,
         interaction: Interaction,
@@ -128,11 +124,10 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
         await respond_with_visibility(interaction, visibility, embed=embed)
 
     @app_commands.command()
-    @l10n.describe_common("visibility")
     async def repo(
         self,
         interaction: Interaction,
-        repo: FullRepositoryOption,
+        repo: RepositoryOption,
         visibility: MessageVisibility = "private",
     ):
         async with self.bot.github_app(interaction) as (github, _):
@@ -164,7 +159,6 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
         await respond_with_visibility(interaction, visibility, embed=embed)
 
     @app_commands.command()
-    @l10n.describe_common("visibility")
     async def user(
         self,
         interaction: Interaction,
@@ -265,7 +259,6 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
                 )
 
     @app_commands.command()
-    @l10n.describe_common("visibility")
     async def status(
         self,
         interaction: Interaction,
@@ -324,11 +317,10 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
 
     class Search(SubGroup):
         @app_commands.command()
-        @l10n.describe_common("visibility")
         async def files(
             self,
             interaction: Interaction,
-            repo: FullRepositoryOption,
+            repo: RepositoryOption,
             query: Range[str, 1, 128],
             ref: Range[str, 1, 255] | None = None,
             exact: bool = False,
