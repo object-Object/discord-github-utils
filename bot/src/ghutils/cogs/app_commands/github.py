@@ -16,7 +16,7 @@ from githubkit import GitHub
 from githubkit.exception import GitHubException, RequestFailed
 from githubkit.rest import Issue, IssuePropPullRequest, PullRequest, SimpleUser
 from more_itertools import consecutive_groups, ilen
-from Pylette import extract_colors
+from Pylette import extract_colors  # pyright: ignore[reportUnknownVariableType]
 from yarl import URL
 
 from ghutils.common.__version__ import VERSION
