@@ -38,6 +38,11 @@ parameter-description_gh-commit_reference =
 command-description_gh-repo =
     Get a link to a GitHub repository.
 
+# /gh user
+
+command-description_gh-user =
+    Get a link to a GitHub user.
+
 # /gh login
 
 command-description_gh-login =
