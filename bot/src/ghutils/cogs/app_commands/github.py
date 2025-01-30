@@ -278,6 +278,8 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
             commit_info = "Unknown"
             deployment_time_info = "Unknown"
 
+        app_info = await self.bot.application_info()
+
         embed = (
             Embed(
                 title="Bot Status",
@@ -300,12 +302,10 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
                 inline=False,
             )
             .add_field(
-                name="Servers",
-                value=f"{len(self.bot.guilds)}",
-            )
-            .add_field(
-                name="Cogs",
-                value=f"{len(self.bot.cogs)}",
+                name="Install count",
+                value=textwrap.dedent(f"""\
+                    {app_info.approximate_guild_count} server{"s" if app_info.approximate_guild_count != 1 else ""}
+                    {app_info.approximate_user_install_count} individual user{"s" if app_info.approximate_user_install_count != 1 else ""}"""),
             )
             .add_field(
                 name="Commands",
