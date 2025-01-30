@@ -44,6 +44,7 @@ from ghutils.utils.github import (
     gh_request,
     shorten_sha,
 )
+from ghutils.utils.l10n import translate_text
 from ghutils.utils.strings import truncate_str
 
 logger = logging.getLogger(__name__)
@@ -275,40 +276,45 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
             deployment_time_info = _discord_date(info.timestamp)
         else:
             color = Color.orange()
-            commit_info = "Unknown"
-            deployment_time_info = "Unknown"
+            commit_info = await translate_text(interaction, "commit_unknown")
+            deployment_time_info = await translate_text(
+                interaction, "deployment-time_unknown"
+            )
 
         app_info = await self.bot.application_info()
 
         embed = (
             Embed(
-                title="Bot Status",
+                title=await translate_text(interaction, "title"),
                 color=color,
             )
             .set_footer(text=f"v{VERSION}")
             .add_field(
-                name="Deployed commit",
+                name=await translate_text(interaction, "commit"),
                 value=commit_info,
                 inline=False,
             )
             .add_field(
-                name="Deployment time",
+                name=await translate_text(interaction, "deployment-time"),
                 value=deployment_time_info,
                 inline=False,
             )
             .add_field(
-                name="Uptime",
+                name=await translate_text(interaction, "uptime"),
                 value=_discord_date(self.bot.start_time),
                 inline=False,
             )
             .add_field(
-                name="Install count",
-                value=textwrap.dedent(f"""\
-                    {app_info.approximate_guild_count} server{"s" if app_info.approximate_guild_count != 1 else ""}
-                    {app_info.approximate_user_install_count} individual user{"s" if app_info.approximate_user_install_count != 1 else ""}"""),
+                name=await translate_text(interaction, "installs"),
+                value=await translate_text(
+                    interaction,
+                    "installs_value",
+                    servers=app_info.approximate_guild_count,
+                    users=app_info.approximate_user_install_count,
+                ),
             )
             .add_field(
-                name="Commands",
+                name=await translate_text(interaction, "commands"),
                 value=f"{ilen(self.bot.tree.walk_commands())}",
             )
         )

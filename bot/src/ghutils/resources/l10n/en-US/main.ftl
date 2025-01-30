@@ -82,6 +82,40 @@ gh-status_description =
 gh-status_parameter-description_visibility =
     {-parameter-description_visibility}
 
+gh-status_text_title =
+    Bot Status
+
+gh-status_text_commit =
+    Deployed commit
+
+gh-status_text_commit_unknown =
+    Unknown
+
+gh-status_text_deployment-time =
+    Deployment time
+
+gh-status_text_deployment-time_unknown =
+    Unknown
+
+gh-status_text_uptime =
+    Uptime
+
+gh-status_text_installs =
+    Install count
+
+gh-status_text_installs_value =
+    { $servers ->
+        [one] 1 server
+        *[other] { $servers } servers
+    }
+    { $users ->
+        [one] 1 individual user
+        *[other] { $users } individual users
+    }
+
+gh-status_text_commands =
+    Commands
+
 # /gh search
 
 gh-search_description =
