@@ -11,7 +11,7 @@ _SEPARATOR_PATTERN = re.compile(r"[ _-]+")
 
 def command_description_id(command: str):
     command = _format_identifier(command)
-    return f"command-description_{command}"
+    return f"{command}_description"
 
 
 def command_description(command: str):
@@ -21,7 +21,7 @@ def command_description(command: str):
 def parameter_description_id(command: str | None, parameter: str):
     command = _format_identifier(command or "common")
     parameter = _format_identifier(parameter)
-    return f"parameter-description_{command}_{parameter}"
+    return f"{command}_parameter-description_{parameter}"
 
 
 def parameter_description(command: str | None, parameter: str):

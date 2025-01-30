@@ -1,7 +1,7 @@
-# command descriptions: command-description_{command}
+# command descriptions: {command}_description
 #   |--------------------------------------------------------------------------------------------------|
 
-# parameter descriptions: parameter-description_{command}_{parameter}
+# parameter descriptions: {command}_parameter-description_{parameter}
 #   |--------------------------------------------------------------------------------------------------|
 
 # common parameters
@@ -11,101 +11,101 @@
 
 # /gh issue
 
-command-description_gh-issue =
+gh-issue_description =
     Get a link to a GitHub issue.
 
-parameter-description_gh-issue_reference =
+gh-issue_parameter-description_reference =
     Issue to look up (`owner/repo#123` or `#123`). Use `/gh login` to get autocomplete.
 
-parameter-description_gh-issue_visibility =
+gh-issue_parameter-description_visibility =
     {-parameter-description_visibility}
 
 # /gh pr
 
-command-description_gh-pr =
+gh-pr_description =
     Get a link to a GitHub pull request.
 
-parameter-description_gh-pr_reference =
+gh-pr_parameter-description_reference =
     Pull request to look up (`owner/repo#123` or `#123`). Use `/gh login` to get autocomplete.
 
-parameter-description_gh-pr_visibility =
+gh-pr_parameter-description_visibility =
     {-parameter-description_visibility}
 
 # /gh commit
 
-command-description_gh-commit =
+gh-commit_description =
     Get a link to a GitHub commit.
 
-parameter-description_gh-commit_reference =
+gh-commit_parameter-description_reference =
     Commit SHA to look up (`owner/repo@sha` or `@sha`). Use `/gh login` to get autocomplete.
 
-parameter-description_gh-commit_visibility =
+gh-commit_parameter-description_visibility =
     {-parameter-description_visibility}
 
 # /gh repo
 
-command-description_gh-repo =
+gh-repo_description =
     Get a link to a GitHub repository.
 
-parameter-description_gh-repo_repo =
+gh-repo_parameter-description_repo =
     Repository to look up (`owner/repo`). Use `/gh login` to get autocomplete.
 
-parameter-description_gh-repo_visibility =
+gh-repo_parameter-description_visibility =
     {-parameter-description_visibility}
 
 # /gh user
 
-command-description_gh-user =
+gh-user_description =
     Get a link to a GitHub user.
 
-parameter-description_gh-repo_user =
+gh-user_parameter-description_user =
     Username to look up. Use `/gh login` to get autocomplete.
 
-parameter-description_gh-user_visibility =
+gh-user_parameter-description_visibility =
     {-parameter-description_visibility}
 
 # /gh login
 
-command-description_gh-login =
+gh-login_description =
     Authorize GitHub Utils to make requests on behalf of your GitHub account.
 
 # /gh logout
 
-command-description_gh-logout =
+gh-logout_description =
     Remove your GitHub account from GitHub Utils.
 
 # /gh status
 
-command-description_gh-status =
+gh-status_description =
     Show information about GitHub Utils.
 
-parameter-description_gh-status_visibility =
+gh-status_parameter-description_visibility =
     {-parameter-description_visibility}
 
 # /gh search
 
-command-description_gh-search =
+gh-search_description =
     Search for things on GitHub.
 
 # /gh search files
 
-command-description_gh-search-files =
+gh-search-files_description =
     Search for files in a repository by name.
 
-parameter-description_gh-search-files_repo =
+gh-search-files_parameter-description_repo =
     Repository to search in (`owner/repo`).
 
-parameter-description_gh-search-files_query =
+gh-search-files_parameter-description_query =
     Filename to search for.
 
-parameter-description_gh-search-files_ref =
+gh-search-files_parameter-description_ref =
     Branch name, tag name, or commit to search in. Defaults to the default branch of the repo.
 
-parameter-description_gh-search-files_exact =
+gh-search-files_parameter-description_exact =
     If true, use exact search; otherwise use fuzzy search.
 
-parameter-description_gh-search-files_limit =
+gh-search-files_parameter-description_limit =
     Maximum number of results to show.
 
-parameter-description_gh-search-files_visibility =
+gh-search-files_parameter-description_visibility =
     {-parameter-description_visibility}
