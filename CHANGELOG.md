@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Pydantic's HISTORY.md](https://github.com/pydantic/pydantic/blob/main/HISTORY.md), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## `0.2.1` - 2025-02-04
+
+### Changed
+
+* Added user install count to `/gh status`.
+* Localized all text in `/gh status`.
+* Updated discord.py to `2.5.0a5153+gdb7b2d90`.
+
 ## `0.2.0` - 2025-01-19
 
 ### Added
