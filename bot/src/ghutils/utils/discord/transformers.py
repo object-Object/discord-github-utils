@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 
 from discord import Interaction
 from discord.app_commands import Transform, Transformer
@@ -18,8 +19,16 @@ from ..github import RepositoryName, gh_request
 logger = logging.getLogger(__name__)
 
 
+REPO_URL_PATTERN = re.compile(r"(?:https?://)?github.com/(?P<value>[\w-]+/[\w-]+)")
+
+USER_URL_PATTERN = re.compile(r"(?:https?://)?github.com/(?P<value>[\w-]+)")
+
+
 class RepositoryTransformer(Transformer):
     async def transform(self, interaction: Interaction, value: str) -> FullRepository:
+        if match := REPO_URL_PATTERN.match(value):
+            value = match["value"]
+
         repo = RepositoryName.parse(value)
         async with GHUtilsBot.github_app_of(interaction) as (github, _):
             try:
@@ -41,6 +50,8 @@ class RepositoryTransformer(Transformer):
     ) -> list[Choice[str]]:
         value = value.strip()
         if value:
+            if match := REPO_URL_PATTERN.match(value):
+                value = match["value"]
             query = f"{value} in:name fork:true"
         else:
             with GHUtilsBot.db_session_of(interaction) as session:
@@ -78,6 +89,9 @@ class UserTransformer(Transformer):
         interaction: Interaction,
         value: str,
     ) -> PrivateUser | PublicUser:
+        if match := USER_URL_PATTERN.match(value):
+            value = match["value"]
+
         async with GHUtilsBot.github_app_of(interaction) as (github, _):
             try:
                 return await gh_request(github.rest.users.async_get_by_username(value))
@@ -102,6 +116,9 @@ class UserTransformer(Transformer):
             if not value:
                 user = await gh_request(github.rest.users.async_get_authenticated())
                 return [Choice(name=user.login, value=user.login)]
+
+            if match := USER_URL_PATTERN.match(value):
+                value = match["value"]
 
             try:
                 result = await gh_request(

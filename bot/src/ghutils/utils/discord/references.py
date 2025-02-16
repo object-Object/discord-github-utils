@@ -20,11 +20,19 @@ from ..strings import truncate_str
 
 logger = logging.getLogger(__name__)
 
+URL_PATTERN = re.compile(
+    r"(?:https?://)?github.com/(?P<repo>[\w-]+/[\w-]+)/(?P<path>[\w-]+)/(?P<reference>[\w-]+)"
+)
+
 
 class ReferenceTransformer[T](Transformer, ABC):
     @property
     @abstractmethod
     def separator(self) -> str: ...
+
+    @property
+    @abstractmethod
+    def url_path(self) -> str: ...
 
     @property
     @abstractmethod
@@ -106,7 +114,10 @@ class ReferenceTransformer[T](Transformer, ABC):
         interaction: Interaction,
         value: str,
     ) -> tuple[RepositoryName, str]:
-        if self.separator in value:
+        if (match := URL_PATTERN.match(value)) and match["path"] == self.url_path:
+            raw_repo = match["repo"]
+            rest = match["reference"]
+        elif self.separator in value:
             raw_repo, rest = value.split(self.separator, maxsplit=1)
         else:
             raw_repo = ""
@@ -137,6 +148,7 @@ class ReferenceTransformer[T](Transformer, ABC):
 
 class IssueOrPRReferenceTransformer[T](ReferenceTransformer[T]):
     @property
+    @abstractmethod
     def issue_type(self) -> Literal["issue", "pr"]: ...
 
     @property
@@ -164,6 +176,10 @@ class IssueOrPRReferenceTransformer[T](ReferenceTransformer[T]):
 
 class IssueReferenceTransformer(IssueOrPRReferenceTransformer[Issue]):
     @property
+    def url_path(self):
+        return "issues"
+
+    @property
     def issue_type(self):
         return "issue"
 
@@ -183,6 +199,10 @@ class IssueReferenceTransformer(IssueOrPRReferenceTransformer[Issue]):
 
 
 class PRReferenceTransformer(IssueOrPRReferenceTransformer[PullRequest]):
+    @property
+    def url_path(self):
+        return "pull"
+
     @property
     def issue_type(self):
         return "pr"
@@ -206,6 +226,10 @@ class CommitReferenceTransformer(ReferenceTransformer[Commit]):
     @property
     def separator(self):
         return "@"
+
+    @property
+    def url_path(self):
+        return "commit"
 
     @property
     def reference_pattern(self):
