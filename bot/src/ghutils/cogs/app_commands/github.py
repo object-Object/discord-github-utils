@@ -166,24 +166,6 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
         user: UserOption,
         visibility: MessageVisibility = "private",
     ):
-        # Use GraphQL to get # of repos starred by user...?
-        async with self.bot.github_app(interaction) as (github, _):
-            result = await github.async_graphql(
-                """
-                query($username: String!) {
-                    user(login: $username) {
-                        starredRepositories {
-                        totalCount
-                        }
-                    }
-                }
-                """,
-                {
-                    "username": user.login,
-                },
-            )
-            num_stars: int = result["user"]["starredRepositories"]["totalCount"]
-
         # Pylette ints are actually int64s, thanks NumPy
         user_rgb = [
             int(val)
@@ -194,6 +176,7 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
             .rgb
         ]
 
+        # Start creating the embed first (see GraphQL queries)
         embed = (
             Embed(
                 description=user.bio,
@@ -202,19 +185,65 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
             )
             .set_thumbnail(url=user.avatar_url)
             .add_field(name="Repositories", value=user.public_repos, inline=True)
-            .add_field(name="Stars", value=num_stars, inline=True)
         )
 
-        # In case user doesn't have a display name
+        footer_text: str = f"{user.type} • {user.followers} followers"
+
+        async with self.bot.github_app(interaction) as (github, state):
+            match user.type:
+                # Users only: get # of repos starred and # following
+                case "User":
+                    result = await github.async_graphql(
+                        """
+                        query($username: String!) {
+                            user(login: $username) {
+                                starredRepositories {
+                                totalCount
+                                }
+                            }
+                        }
+                        """,
+                        {
+                            "username": user.login,
+                        },
+                    )
+                    num_stars: int = result["user"]["starredRepositories"]["totalCount"]
+                    embed.add_field(name="Stars", value=num_stars, inline=True)
+                    footer_text += f" • {user.following} following"
+
+                # Organizations only: add # of people in org (only works if logged in)
+                case "Organization":
+                    if state == LoginState.LOGGED_IN:
+                        result = await github.async_graphql(
+                            """
+                            query ($name: String!) {
+                                organization(login: $name) {
+                                    membersWithRole {
+                                    totalCount
+                                    }
+                                }
+                            }
+                            """,
+                            {
+                                "name": user.login,
+                            },
+                        )
+                        num_members: int = result["organization"]["membersWithRole"][
+                            "totalCount"
+                        ]
+                        embed.add_field(name="People", value=num_members, inline=True)
+
+                case _:
+                    logger.warning(f"Unhandled user type: {user.type}")
+
+        # In case there's no display name
         if user.name is None:
             embed.title = user.login
         else:
             embed.title = user.name
             embed.set_author(name=user.login)
 
-        embed.set_footer(
-            text=f"{user.followers} followers • {user.following} following"
-        )
+        embed.set_footer(text=footer_text)
 
         await respond_with_visibility(interaction, visibility, embed=embed)
 
