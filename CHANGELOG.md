@@ -4,11 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Pydantic's HISTORY.md](https://github.com/pydantic/pydantic/blob/main/HISTORY.md), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [UNRELEASED]
+## `0.2.2` - 2025-02-17
 
 ### Changed
 
 * Several commands now accept a GitHub URL as input (eg. `/gh issue issue:https://github.com/object-Object/discord-github-utils/issues/1`).
+* Added the member count to `/gh user` for organizations if the user is logged in, by [mercurialworld](https://github.com/mercurialworld) in [#5](https://github.com/object-Object/discord-github-utils/pull/5).
+
+### Fixed
+
+* `/gh user` no longer fails if the user is an organization, by [mercurialworld](https://github.com/mercurialworld) in [#5](https://github.com/object-Object/discord-github-utils/pull/5).
 
 ## `0.2.1` - 2025-02-04
 
