@@ -3,10 +3,6 @@ FROM python:3.12.3-slim
 
 WORKDIR /app
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends git \
-    && rm -rf /var/lib/apt/lists/*
-
 COPY requirements.lock ./
 
 # comment out editable requirements, since they're not permitted in constraint files

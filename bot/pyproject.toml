@@ -8,7 +8,7 @@ name = "ghutils-bot"
 requires-python = ">=3.12"
 dependencies = [
     "ghutils-common",
-    "discord-py @ git+https://github.com/Rapptz/discord.py@db7b2d9058e4",
+    "discord-py>=2.5.0",
     "pydantic>=2.7.4",
     "pydantic-settings>=2.3.4",
     "fastapi>=0.111.0",
