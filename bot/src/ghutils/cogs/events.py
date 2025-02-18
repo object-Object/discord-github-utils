@@ -17,6 +17,7 @@ class EventsCog(GHUtilsCog):
     async def on_ready(self):
         logger.info(f"Logged in as {self.bot.user}")
         self.bot.add_dynamic_items(PermanentDeleteButton)
+        await self.bot.fetch_custom_emojis()
 
     @Cog.listener()
     async def on_interaction(self, interaction: Interaction):

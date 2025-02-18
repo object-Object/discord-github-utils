@@ -3,15 +3,13 @@ from datetime import UTC, datetime
 from re import Match
 from typing import Any, Literal, Self
 
-from discord import (
-    Embed,
-    Interaction,
-    PartialEmoji,
-    ui,
-)
+from discord import Embed, Interaction, ui
 from discord.app_commands import Command, ContextMenu
 from discord.ui import Button, DynamicItem, Item, View
 from discord.utils import MISSING
+
+from ghutils.core.bot import GHUtilsBot
+from ghutils.core.types import CustomEmoji
 
 from .commands import AnyCommand
 
@@ -76,10 +74,10 @@ class MessageContents:
                     label = f"{interaction.user.name} used /{command_name}"
                 case _:
                     label = f"Sent by {interaction.user.name}"
+            bot = GHUtilsBot.of(interaction)
             view.add_item(
                 Button(
-                    # FIXME: remove hardcoded emoji id
-                    emoji=PartialEmoji(name="apps_icon", id=1279865345250693151),
+                    emoji=bot.get_custom_emoji(CustomEmoji.apps_icon),
                     label=label,
                     disabled=True,
                 )

@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ### Changed
 
+* Implemented a system for custom application emoji, currently only used by the "apps icon" when resending a private message publicly.
 * Updated discord.py to `2.5.0`.
 
 ## `0.2.2` - 2025-02-17

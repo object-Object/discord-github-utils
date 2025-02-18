@@ -35,6 +35,13 @@ class SyncCog(GHUtilsCog):
 
         await ctx.reply("Synced global slash commands to all guilds.")
 
+    @sync.command(name="emoji", aliases=["emojis", "emotes"])
+    async def sync_emoji(self, ctx: GHUtilsContext):
+        async with ctx.channel.typing():
+            await self.bot.sync_custom_emojis()
+
+        await ctx.reply("Synced custom bot emojis.")
+
     @commands.group(invoke_without_command=True)
     @commands.guild_only()
     async def clear(self, ctx: GHUtilsContext):
