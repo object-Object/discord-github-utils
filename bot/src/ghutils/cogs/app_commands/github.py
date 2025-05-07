@@ -362,6 +362,11 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
             limit: Range[int, 1, 25] = 5,
             visibility: MessageVisibility = "private",
         ):
+            await interaction.response.defer(
+                ephemeral=visibility == "private",
+                thinking=True,
+            )
+
             async with self.bot.github_app(interaction) as (github, state):
                 if state != LoginState.LOGGED_IN:
                     raise NotLoggedInError()
@@ -379,7 +384,7 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
                         )
                     )
                 except RequestFailed as e:
-                    if e.response.status_code == 404:  # pyright: ignore[reportUnknownMemberType]
+                    if e.response.status_code in [404, 422]:  # pyright: ignore[reportUnknownMemberType]
                         raise InvalidInputError(
                             value=ref,
                             message=f"Ref does not exist in `{repo.full_name}`.",

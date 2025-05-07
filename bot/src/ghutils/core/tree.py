@@ -18,10 +18,6 @@ class GHUtilsCommandTree(CommandTree):
         if isinstance(error, SilentError):
             return
 
-        if interaction.response.is_done():
-            await super().on_error(interaction, error)
-            return
-
         embed = Embed(
             color=Color.red(),
             timestamp=datetime.now(UTC),
@@ -69,4 +65,7 @@ class GHUtilsCommandTree(CommandTree):
                 text=error.__class__.__name__,
             )
 
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        if interaction.response.is_done():
+            await interaction.followup.send(embed=embed, ephemeral=True)
+        else:
+            await interaction.response.send_message(embed=embed, ephemeral=True)

@@ -23,11 +23,15 @@ async def respond_with_visibility(
     content: Any | None = None,
     embed: Embed = MISSING,
 ):
-    await MessageContents(
+    data = MessageContents(
         command=interaction.command,
         content=content,
         embed=embed,
-    ).send_response(interaction, visibility)
+    )
+    if interaction.response.is_done():
+        await data.send_followup(interaction, visibility)
+    else:
+        await data.send_response(interaction, visibility)
 
 
 @dataclass(kw_only=True)
@@ -45,6 +49,19 @@ class MessageContents:
         await interaction.response.send_message(
             content=self.content,
             embed=self.embed,
+            ephemeral=visibility == "private",
+            view=self._get_view(interaction, visibility, show_user),
+        )
+
+    async def send_followup(
+        self,
+        interaction: Interaction,
+        visibility: MessageVisibility,
+        show_user: bool = False,
+    ):
+        await interaction.followup.send(
+            content=self.content or MISSING,
+            embed=self.embed or MISSING,
             ephemeral=visibility == "private",
             view=self._get_view(interaction, visibility, show_user),
         )
