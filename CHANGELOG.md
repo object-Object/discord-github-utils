@@ -4,12 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Pydantic's HISTORY.md](https://github.com/pydantic/pydantic/blob/main/HISTORY.md), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [UNRELEASED]
+## `0.2.3` - 2025-05-07
 
 ### Changed
 
 * Implemented a system for custom application emoji, currently only used by the "apps icon" when resending a private message publicly.
 * Updated discord.py to `2.5.0`.
+
+### Fixed
+
+* Fixed an issue where `/gh search files` would sometimes fail because it took more than 3 seconds to send a response.
 
 ## `0.2.2` - 2025-02-17
 
