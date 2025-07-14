@@ -53,8 +53,7 @@ class PullRequestState(Enum):
                 return None
 
             case (
-                Issue(state="open", draft=True)
-                | PullRequest(state="open", draft=True)
+                Issue(state="open", draft=True) | PullRequest(state="open", draft=True)
             ):
                 return PullRequestState.DRAFT
 

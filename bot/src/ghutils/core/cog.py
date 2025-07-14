@@ -39,7 +39,7 @@ class GHUtilsCog(Cog, metaclass=GHUtilsCogMeta):
             else:
                 logger.debug(
                     f"Not adding setup function for {cls} to {cls.__module__},"
-                    + f" attribute already exists: {getattr(module, "setup", None)}"
+                    + f" attribute already exists: {getattr(module, 'setup', None)}"
                 )
 
     @classmethod

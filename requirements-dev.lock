@@ -148,7 +148,7 @@ numpy==1.26.4
     # via pylette
     # via scikit-learn
     # via scipy
-object-ci @ git+https://github.com/object-Object/ci@6c2cba42668b4c632a1368adb5034e733cb6cc0a
+object-ci @ git+https://github.com/object-Object/ci@ff3bc4f4204b3ba7153c247c1a73af649e5d27ad
     # via ghutils-infrastructure
 orjson==3.10.5
     # via fastapi
@@ -205,7 +205,7 @@ requests==2.32.3
     # via pylette
 rich==13.7.1
     # via typer
-ruff==0.4.10
+ruff==0.12.3
 scikit-learn==1.6.1
     # via pylette
 scipy==1.15.1
