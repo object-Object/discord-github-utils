@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from re import Match
-from typing import Any, Literal, Self
+from typing import Any, Literal, Self, Sequence
 
 from discord import Embed, Interaction, ui
 from discord.app_commands import Command, ContextMenu
@@ -22,11 +22,13 @@ async def respond_with_visibility(
     *,
     content: Any | None = None,
     embed: Embed = MISSING,
+    embeds: Sequence[Embed] = MISSING,
 ):
     data = MessageContents(
         command=interaction.command,
         content=content,
         embed=embed,
+        embeds=embeds,
     )
     if interaction.response.is_done():
         await data.send_followup(interaction, visibility)
@@ -39,6 +41,7 @@ class MessageContents:
     command: AnyCommand | ContextMenu | None
     content: Any | None = None
     embed: Embed = MISSING
+    embeds: Sequence[Embed] = MISSING
 
     async def send_response(
         self,
@@ -49,6 +52,7 @@ class MessageContents:
         await interaction.response.send_message(
             content=self.content,
             embed=self.embed,
+            embeds=self.embeds,
             ephemeral=visibility == "private",
             view=self._get_view(interaction, visibility, show_user),
         )
@@ -62,6 +66,7 @@ class MessageContents:
         await interaction.followup.send(
             content=self.content or MISSING,
             embed=self.embed or MISSING,
+            embeds=self.embeds or MISSING,
             ephemeral=visibility == "private",
             view=self._get_view(interaction, visibility, show_user),
         )
