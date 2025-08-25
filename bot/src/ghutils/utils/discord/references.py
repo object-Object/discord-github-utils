@@ -63,24 +63,32 @@ class ReferenceTransformer[T](Transformer, ABC):
         interaction: Interaction,
         value: str,
     ) -> tuple[RepositoryName, T]:
+        async with GHUtilsBot.github_app_of(interaction) as (github, _):
+            return await self.transform_with_github(github, interaction, value)
+
+    async def transform_with_github(
+        self,
+        github: GitHub[Any],
+        interaction: Interaction,
+        value: str,
+    ):
         repo, raw_reference = await self.get_repo_and_reference(interaction, value)
 
         match = re.match(rf"^({self.reference_pattern})", raw_reference)
         if not match:
             raise ValueError(f"Malformed reference: {raw_reference}")
 
-        async with GHUtilsBot.github_app_of(interaction) as (github, _):
-            try:
-                return repo, await self.resolve_reference(github, repo, match[1])
-            except GitHubException as e:
-                match e:
-                    case RequestFailed(response=Response(status_code=404)):
-                        raise ValueError(
-                            f"Failed to resolve reference '{value}': Not found"
-                        )
-                    case _:
-                        logger.warning(e)
-                        raise ValueError(f"Failed to resolve reference '{value}': {e}")
+        try:
+            return repo, await self.resolve_reference(github, repo, match[1])
+        except GitHubException as e:
+            match e:
+                case RequestFailed(response=Response(status_code=404)):
+                    raise ValueError(
+                        f"Failed to resolve reference '{value}': Not found"
+                    )
+                case _:
+                    logger.warning(e)
+                    raise ValueError(f"Failed to resolve reference '{value}': {e}")
 
     async def autocomplete(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,

@@ -10,6 +10,12 @@ class LoginState(Enum):
     LOGGED_OUT = auto()
     EXPIRED = auto()
 
+    def logged_in(self):
+        return self is LoginState.LOGGED_IN
+
+    def logged_out(self):
+        return not self.logged_in()
+
 
 class CustomEmoji(Enum):
     apps_icon = "apps_icon.png"

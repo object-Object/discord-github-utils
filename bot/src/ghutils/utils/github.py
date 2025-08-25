@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
@@ -83,6 +84,9 @@ class CommitCheckState(Enum):
         self.color = color
 
 
+REPOSITORY_NAME_URL_PATTERN = re.compile(r"github.com/(?P<owner>[^/]+)/(?P<repo>[^/]+)")
+
+
 @dataclass
 class RepositoryName:
     owner: str
@@ -105,6 +109,13 @@ class RepositoryName:
             return cls.parse(value)
         except ValueError:
             return None
+
+    @classmethod
+    def from_url(cls, url: str) -> Self:
+        match = REPOSITORY_NAME_URL_PATTERN.search(url)
+        if not match:
+            raise ValueError("GitHub URL not found")
+        return cls(owner=match["owner"], repo=match["repo"])
 
     def __str__(self) -> str:
         return f"{self.owner}/{self.repo}"

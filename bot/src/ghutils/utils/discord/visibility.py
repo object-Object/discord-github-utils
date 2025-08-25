@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from re import Match
 from typing import Any, Literal, Self, Sequence
@@ -23,12 +23,14 @@ async def respond_with_visibility(
     content: Any | None = None,
     embed: Embed = MISSING,
     embeds: Sequence[Embed] = MISSING,
+    items: Sequence[Item[Any]] = [],
 ):
     data = MessageContents(
         command=interaction.command,
         content=content,
         embed=embed,
         embeds=embeds,
+        items=items,
     )
     if interaction.response.is_done():
         await data.send_followup(interaction, visibility)
@@ -42,6 +44,7 @@ class MessageContents:
     content: Any | None = None
     embed: Embed = MISSING
     embeds: Sequence[Embed] = MISSING
+    items: Sequence[Item[Any]] = field(default_factory=lambda: list())
 
     async def send_response(
         self,
@@ -90,6 +93,9 @@ class MessageContents:
             view.add_item(TemporaryDeleteButton(interaction))
             view.timeout = (interaction.expires_at - datetime.now(UTC)).total_seconds()
 
+        for item in self.items:
+            view.add_item(item)
+
         if show_user:
             match self.command:
                 case Command(qualified_name=command_name):
@@ -115,6 +121,8 @@ class PrivateView(View):
 
     def __post_init__(self):
         super().__init__(timeout=None)
+        for item in self.message_contents.items:
+            self.add_item(item)
 
     @ui.button(emoji="👁️")
     async def resend_as_public(self, interaction: Interaction, button: Button[Self]):
