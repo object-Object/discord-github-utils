@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Pydantic's HISTORY.md](https://github.com/pydantic/pydantic/blob/main/HISTORY.md), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [UNRELEASED]
+
+### Added
+
+* Added a button to issue/PR/commit messages that updates the embed with the latest details.
+  * For example, if you run `/gh issue issue:1`, and then the title of issue #1 is changed, pressing the refresh button will edit the embed title to match the new issue title.
+  * This button can only be used once per minute by unauthenticated users (calculated using the message's last edit time).
+
+### Changed
+
+* The "Show GitHub issues" message command now includes the issue description if the message only contains one issue reference.
+
+### Notes
+
+* The previous release should have been `0.3.0` instead of `0.2.4`, since a new feature was added.
+
 ## `0.2.4` - 2025-07-14
 
 ### Added
