@@ -5,7 +5,11 @@ from discord.ext.commands import Cog
 
 from ghutils.core.cog import GHUtilsCog
 from ghutils.utils.discord.commands import get_command, print_command
-from ghutils.utils.discord.components import RefreshCommitButton, RefreshIssueButton
+from ghutils.utils.discord.components import (
+    RefreshCommitButton,
+    RefreshIssueButton,
+    RefreshIssuesButton,
+)
 from ghutils.utils.discord.visibility import PermanentDeleteButton
 
 logger = logging.getLogger(__name__)
@@ -21,6 +25,7 @@ class EventsCog(GHUtilsCog):
             PermanentDeleteButton,
             RefreshCommitButton,
             RefreshIssueButton,
+            RefreshIssuesButton,
         )
         await self.bot.fetch_custom_emojis()
 

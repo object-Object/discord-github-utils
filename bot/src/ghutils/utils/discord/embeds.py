@@ -1,12 +1,16 @@
 from __future__ import annotations
 
+import logging
+import re
 from datetime import datetime
 from typing import Any
 
-from discord import Embed
+from discord import Embed, Interaction, Message
 from githubkit import GitHub
 from githubkit.exception import GitHubException
 from githubkit.rest import Commit, Issue, IssuePropPullRequest, PullRequest, SimpleUser
+
+from ghutils.utils.discord.visibility import MessageContents
 
 from ..github import (
     CommitCheckState,
@@ -18,6 +22,9 @@ from ..github import (
     shorten_sha,
 )
 from ..strings import truncate_str
+from .references import IssueReference, IssueReferenceTransformer
+
+logger = logging.getLogger(__name__)
 
 
 def set_embed_author(embed: Embed, user: SimpleUser):
@@ -60,6 +67,65 @@ def create_issue_embed(
         set_embed_author(embed, issue.user)
 
     return embed
+
+
+_ISSUE_PATTERN = re.compile(
+    r"""
+    (?<![a-zA-Z`</])
+    (?P<value>
+        (?P<repo>[\w-]+/[\w-]+)?
+        \#
+        (?P<reference>[0-9]+)
+    )
+    (?![a-zA-Z`>])
+    """,
+    flags=re.VERBOSE,
+)
+
+
+async def create_issue_embeds(
+    github: GitHub[Any],
+    interaction: Interaction,
+    message: Message,
+):
+    seen = set[str]()
+    issues = list[IssueReference]()
+    transformer = IssueReferenceTransformer()
+
+    for match in _ISSUE_PATTERN.finditer(message.content):
+        value = match.group("value")
+        try:
+            repo, issue = await transformer.transform_with_github(
+                github, interaction, value
+            )
+        except Exception:
+            logger.warning(
+                f"Failed to transform issue reference: {value}", exc_info=True
+            )
+            continue
+
+        if issue.html_url in seen:
+            continue
+
+        seen.add(issue.html_url)
+        issues.append((repo, issue))
+
+    content = None
+    embeds = list[Embed]()
+    match issues:
+        case []:
+            content = "❌ No issue references found."
+        case [reference]:
+            embeds.append(create_issue_embed(*reference))
+        case _:
+            embeds.extend(
+                create_issue_embed(*reference, add_body=False) for reference in issues
+            )
+    return MessageContents(
+        command=interaction.command,
+        content=content,
+        embeds=embeds,
+    )
 
 
 async def create_commit_embed(

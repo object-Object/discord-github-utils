@@ -23,28 +23,35 @@ async def respond_with_visibility(
     content: Any | None = None,
     embed: Embed = MISSING,
     embeds: Sequence[Embed] = MISSING,
-    items: Sequence[Item[Any]] = [],
+    items: list[Item[Any]] | None = None,
 ):
     data = MessageContents(
         command=interaction.command,
         content=content,
         embed=embed,
         embeds=embeds,
-        items=items,
+        items=items if items is not None else [],
     )
-    if interaction.response.is_done():
-        await data.send_followup(interaction, visibility)
-    else:
-        await data.send_response(interaction, visibility)
+    await data.send(interaction, visibility)
 
 
 @dataclass(kw_only=True)
 class MessageContents:
     command: AnyCommand | ContextMenu | None
-    content: Any | None = None
+    content: Any | None = MISSING
     embed: Embed = MISSING
     embeds: Sequence[Embed] = MISSING
-    items: Sequence[Item[Any]] = field(default_factory=lambda: list())
+    items: list[Item[Any]] = field(default_factory=lambda: list())
+
+    async def send(
+        self,
+        interaction: Interaction,
+        visibility: MessageVisibility,
+    ):
+        if interaction.response.is_done():
+            await self.send_followup(interaction, visibility)
+        else:
+            await self.send_response(interaction, visibility)
 
     async def send_response(
         self,
@@ -72,6 +79,19 @@ class MessageContents:
             embeds=self.embeds or MISSING,
             ephemeral=visibility == "private",
             view=self._get_view(interaction, visibility, show_user),
+        )
+
+    async def edit_original_response(
+        self,
+        interaction: Interaction,
+        *,
+        view: View | None = MISSING,
+    ):
+        await interaction.edit_original_response(
+            content=self.content,
+            embed=self.embed,
+            embeds=self.embeds,
+            view=view,
         )
 
     def _get_view(

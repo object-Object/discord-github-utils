@@ -84,7 +84,9 @@ class CommitCheckState(Enum):
         self.color = color
 
 
-REPOSITORY_NAME_URL_PATTERN = re.compile(r"github.com/(?P<owner>[^/]+)/(?P<repo>[^/]+)")
+_REPOSITORY_NAME_URL_PATTERN = re.compile(
+    r"github.com/(?P<owner>[^/]+)/(?P<repo>[^/]+)"
+)
 
 
 @dataclass
@@ -112,7 +114,7 @@ class RepositoryName:
 
     @classmethod
     def from_url(cls, url: str) -> Self:
-        match = REPOSITORY_NAME_URL_PATTERN.search(url)
+        match = _REPOSITORY_NAME_URL_PATTERN.search(url)
         if not match:
             raise ValueError("GitHub URL not found")
         return cls(owner=match["owner"], repo=match["repo"])

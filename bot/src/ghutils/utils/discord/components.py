@@ -1,27 +1,28 @@
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from re import Match
 from typing import Any, override
 
-from discord import Color, Embed, Interaction
+from discord import Color, Embed, Interaction, Message
 from discord.ui import Button, DynamicItem, Item
 from githubkit import GitHub
 from githubkit.rest import Commit, Issue
 from pydantic import TypeAdapter
-from pydantic.dataclasses import dataclass
+from pydantic.dataclasses import dataclass as pydantic_dataclass
 
 from ghutils.core.bot import GHUtilsBot
 from ghutils.core.types import LoginState
-from ghutils.utils.discord.references import (
+
+from ..github import RepositoryName, gh_request
+from .embeds import create_commit_embed, create_issue_embed, create_issue_embeds
+from .references import (
     CommitReference,
     IssueReference,
     PRReference,
 )
-from ghutils.utils.github import RepositoryName, gh_request
-
-from .embeds import create_commit_embed, create_issue_embed
 
 
-@dataclass
+@pydantic_dataclass
 class RefreshIssueButton(
     DynamicItem[Button[Any]],
     template=r"RefreshIssue:(?P<repo_id>[0-9]+):(?P<issue>[0-9]+)",
@@ -86,6 +87,54 @@ class RefreshIssueButton(
 
 
 @dataclass
+class RefreshIssuesButton(
+    DynamicItem[Button[Any]],
+    template=r"RefreshIssues:(?P<message_id>[0-9]+)",
+):
+    message: Message
+
+    def __post_init__(self):
+        super().__init__(
+            Button(
+                emoji="🔄",
+                custom_id=f"RefreshIssues:{self.message.id}",
+            )
+        )
+
+    @classmethod
+    @override
+    async def from_custom_id(
+        cls,
+        interaction: Interaction,
+        item: Item[Any],
+        match: Match[str],
+    ):
+        assert interaction.message is not None
+        message_id = int(match["message_id"])
+        return cls(
+            message=await interaction.message.channel.fetch_message(message_id),
+        )
+
+    @override
+    async def callback(self, interaction: Interaction):
+        async with GHUtilsBot.github_app_of(interaction) as (github, state):
+            if not await _check_ratelimit(interaction, state):
+                return
+
+            # disable the button while we're working to give a loading indication
+            self.item.disabled = True
+            await interaction.response.edit_message(view=self.view)
+
+            self.item.disabled = False
+            try:
+                contents = await create_issue_embeds(github, interaction, self.message)
+                await contents.edit_original_response(interaction, view=self.view)
+            except Exception:
+                await interaction.response.edit_message(view=self.view)
+                raise
+
+
+@pydantic_dataclass
 class RefreshCommitButton(
     DynamicItem[Button[Any]],
     template=r"RefreshCommit:(?P<repo_id>[0-9]+):(?P<sha>[^:]+)",
