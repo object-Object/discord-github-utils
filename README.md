@@ -13,7 +13,9 @@ rye run setup
 ### Discord bot
 
 1. [Create a Discord bot](https://discordpy.readthedocs.io/en/stable/discord.html) for development.
-2. Copy the bot token.
+2. Enable the following privileged intents:
+   * Message Content: required for the refresh button on the "Show GitHub issues" message command.
+3. Copy the bot token.
 
 ### GitHub app
 
