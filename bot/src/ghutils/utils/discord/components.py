@@ -164,7 +164,8 @@ async def _check_ratelimit(interaction: Interaction, state: LoginState) -> bool:
                 color=Color.red(),
             ),
             ephemeral=True,
-            delete_after=(retry_time - now).total_seconds(),
+            # delete the message after the timeout, but wait at least 10 seconds to allow reading it fully
+            delete_after=max((retry_time - now).total_seconds(), 10),
         )
         return False
     return True
