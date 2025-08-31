@@ -36,6 +36,7 @@ from ghutils.utils.discord.references import (
     PRReference,
 )
 from ghutils.utils.discord.transformers import RepositoryOption, UserOption
+from ghutils.utils.discord.views.select_artifact import SelectArtifactView
 from ghutils.utils.discord.visibility import MessageVisibility, respond_with_visibility
 from ghutils.utils.github import gh_request
 from ghutils.utils.l10n import translate_text
@@ -328,6 +329,13 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
         )
 
         await respond_with_visibility(interaction, visibility, embed=embed)
+
+    class Actions(SubGroup):
+        @app_commands.command()
+        async def artifact(self, interaction: Interaction, repo: RepositoryOption):
+            await interaction.response.defer(ephemeral=True)
+            view = await SelectArtifactView.new(interaction, repo)
+            await interaction.followup.send(view=view, ephemeral=True)
 
     class Search(SubGroup):
         @app_commands.command()

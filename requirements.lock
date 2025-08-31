@@ -46,8 +46,9 @@ aws-cdk-lib==2.158.0
     # via aws-cdk-github-oidc
     # via ghutils-infrastructure
     # via object-ci
-babel==2.16.0
+babel==2.17.0
     # via fluent-runtime
+    # via ghutils-bot
 cattrs==23.2.3
     # via jsii
 certifi==2024.6.2
@@ -69,7 +70,7 @@ constructs==10.3.0
     # via aws-cdk-lib
 cryptography==43.0.0
     # via pyjwt
-discord-py==2.5.0
+discord-py==2.6.2
     # via ghutils-bot
 dnspython==2.6.1
     # via email-validator
@@ -103,6 +104,8 @@ httpx==0.27.0
     # via fastapi
     # via githubkit
     # via hishel
+humanize==4.13.0
+    # via ghutils-bot
 idna==3.7
     # via anyio
     # via email-validator

@@ -116,6 +116,19 @@ gh-status_text_installs_value =
 gh-status_text_commands =
     Commands
 
+# /gh actions
+
+gh-actions_description =
+    Commands for GitHub Actions.
+
+# /gh actions artifact
+
+gh-actions-artifact_description =
+    Get a link to download a workflow artifact.
+
+gh-actions-artifact_parameter-description_repo =
+    Repository to search in (`owner/repo`).
+
 # /gh search
 
 gh-search_description =

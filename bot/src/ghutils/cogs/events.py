@@ -10,7 +10,7 @@ from ghutils.utils.discord.components import (
     RefreshIssueButton,
     RefreshIssuesButton,
 )
-from ghutils.utils.discord.visibility import PermanentDeleteButton
+from ghutils.utils.discord.visibility import DeleteButton
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ class EventsCog(GHUtilsCog):
     async def on_ready(self):
         logger.info(f"Logged in as {self.bot.user}")
         self.bot.add_dynamic_items(
-            PermanentDeleteButton,
+            DeleteButton,
             RefreshCommitButton,
             RefreshIssueButton,
             RefreshIssuesButton,

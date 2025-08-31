@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from re import Match
-from typing import Any, override
+from typing import Any, Literal, overload, override
 
-from discord import Color, Embed, Interaction, Message
-from discord.ui import Button, DynamicItem, Item
+from discord import Color, Embed, Interaction, Message, SelectOption
+from discord.ui import Button, DynamicItem, Item, Select
 from githubkit import GitHub
 from githubkit.rest import Commit, Issue
 from pydantic import TypeAdapter
@@ -15,6 +15,7 @@ from ghutils.core.types import LoginState
 
 from ..github import RepositoryName, gh_request
 from .embeds import create_commit_embed, create_issue_embed, create_issue_embeds
+from .mentions import relative_timestamp
 from .references import (
     CommitReference,
     IssueReference,
@@ -196,6 +197,40 @@ class RefreshCommitButton(
             )
 
 
+def update_select_menu_defaults(select: Select[Any]) -> list[SelectOption]:
+    selected = set(select.values)
+    result = list[SelectOption]()
+    for option in select.options:
+        option.default = option.value in selected
+        if option.default:
+            result.append(option)
+    return result
+
+
+@overload
+def update_select_menu_default(
+    select: Select[Any],
+    required: Literal[True],
+) -> SelectOption: ...
+
+
+@overload
+def update_select_menu_default(
+    select: Select[Any],
+    required: Literal[False] = False,
+) -> SelectOption | None: ...
+
+
+def update_select_menu_default(
+    select: Select[Any],
+    required: bool = False,
+) -> SelectOption | None:
+    selected = update_select_menu_defaults(select)
+    if not required and not selected:
+        return None
+    return selected[0]
+
+
 async def _check_ratelimit(interaction: Interaction, state: LoginState) -> bool:
     now = datetime.now(UTC)
     if (
@@ -209,7 +244,7 @@ async def _check_ratelimit(interaction: Interaction, state: LoginState) -> bool:
             embed=Embed(
                 title="Slow down!",
                 description="This button can only be used once per minute by unauthenticated users."
-                + f" Use `/gh login` to authenticate, or try again <t:{retry_time.timestamp():.0f}:R>.",
+                + f" Use `/gh login` to authenticate, or try again {relative_timestamp(retry_time)}.",
                 color=Color.red(),
             ),
             ephemeral=True,

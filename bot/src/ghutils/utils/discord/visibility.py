@@ -1,17 +1,16 @@
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
 from re import Match
-from typing import Any, Literal, Self, Sequence
+from typing import Any, Awaitable, Callable, Literal, Sequence, overload
 
-from discord import Embed, Interaction, ui
-from discord.app_commands import Command, ContextMenu
-from discord.ui import Button, DynamicItem, Item, View
+from discord import Embed, Interaction
+from discord.app_commands import Command
+from discord.ui import ActionRow, Button, Container, DynamicItem, Item, LayoutView, View
 from discord.utils import MISSING
 
 from ghutils.core.bot import GHUtilsBot
 from ghutils.core.types import CustomEmoji
 
-from .commands import AnyCommand
+from .commands import AnyInteractionCommand
 
 type MessageVisibility = Literal["public", "private"]
 
@@ -37,7 +36,7 @@ async def respond_with_visibility(
 
 @dataclass(kw_only=True)
 class MessageContents:
-    command: AnyCommand | ContextMenu | None
+    command: AnyInteractionCommand
     content: Any | None = MISSING
     embed: Embed = MISSING
     embeds: Sequence[Embed] = MISSING
@@ -57,35 +56,35 @@ class MessageContents:
         self,
         interaction: Interaction,
         visibility: MessageVisibility,
-        show_user: bool = False,
+        show_usage: bool = False,
     ):
         await interaction.response.send_message(
             content=self.content,
             embed=self.embed,
             embeds=self.embeds,
             ephemeral=visibility == "private",
-            view=self._get_view(interaction, visibility, show_user),
+            view=self._get_view(interaction, visibility, show_usage),
         )
 
     async def send_followup(
         self,
         interaction: Interaction,
         visibility: MessageVisibility,
-        show_user: bool = False,
+        show_usage: bool = False,
     ):
         await interaction.followup.send(
             content=self.content or MISSING,
             embed=self.embed or MISSING,
             embeds=self.embeds or MISSING,
             ephemeral=visibility == "private",
-            view=self._get_view(interaction, visibility, show_user),
+            view=self._get_view(interaction, visibility, show_usage),
         )
 
     async def edit_original_response(
         self,
         interaction: Interaction,
         *,
-        view: View | None = MISSING,
+        view: View | LayoutView | None = MISSING,
     ):
         await interaction.edit_original_response(
             content=self.content,
@@ -98,69 +97,41 @@ class MessageContents:
         self,
         interaction: Interaction,
         visibility: MessageVisibility,
-        show_user: bool,
+        show_usage: bool,
     ):
-        if visibility == "private":
-            return PrivateView(interaction, self)
-
         view = View(timeout=None)
-
-        # we can't delete our own messages if the user is running this in a place where
-        # the bot hasn't been added
-        if interaction.is_guild_integration():
-            view.add_item(PermanentDeleteButton(interaction.user.id))
-        else:
-            view.add_item(TemporaryDeleteButton(interaction))
-            view.timeout = (interaction.expires_at - datetime.now(UTC)).total_seconds()
-
         for item in self.items:
             view.add_item(item)
-
-        if show_user:
-            match self.command:
-                case Command(qualified_name=command_name):
-                    label = f"{interaction.user.name} used /{command_name}"
-                case _:
-                    label = f"Sent by {interaction.user.name}"
-            bot = GHUtilsBot.of(interaction)
-            view.add_item(
-                Button(
-                    emoji=bot.get_custom_emoji(CustomEmoji.apps_icon),
-                    label=label,
-                    disabled=True,
-                )
-            )
-
+        add_visibility_buttons(
+            parent=view,
+            interaction=interaction,
+            command=self.command,
+            visibility=visibility,
+            show_usage=show_usage,
+            send_as_public=lambda i: self.send_response(i, "public", show_usage=True),
+        )
         return view
 
 
 @dataclass
-class PrivateView(View):
+class SendAsPublicButton(Button[Any]):
     original_interaction: Interaction
-    message_contents: MessageContents
+    send_as_public: Callable[[Interaction], Awaitable[Any]]
 
     def __post_init__(self):
-        super().__init__(timeout=None)
-        for item in self.message_contents.items:
-            self.add_item(item)
+        super().__init__(emoji="👁️")
 
-    @ui.button(emoji="👁️")
-    async def resend_as_public(self, interaction: Interaction, button: Button[Self]):
+    async def callback(self, interaction: Interaction):
         await self.original_interaction.delete_original_response()
-        await self.message_contents.send_response(interaction, "public", show_user=True)
+        await self.send_as_public(interaction)
 
 
 @dataclass
-class PermanentDeleteButton(
+class DeleteButton(
     DynamicItem[Button[Any]],
     template=r"DeleteButton:user:(?P<id>[0-9]+)",
 ):
-    """A button that deletes its message when pressed by the user who created it.
-
-    Only works in guilds where the bot has been installed! Otherwise we get an error
-    (`403 Forbidden (error code: 50001): Missing Access`) when trying to delete the
-    message.
-    """
+    """A button that deletes its message when pressed by the user who created it."""
 
     user_id: int
 
@@ -182,31 +153,82 @@ class PermanentDeleteButton(
         return cls(user_id=int(match["id"]))
 
     async def callback(self, interaction: Interaction):
-        if (
-            interaction.user.id == self.user_id
-            and interaction.message is not None
-            and interaction.message.author == interaction.client.user
-        ):
-            await interaction.message.delete()
-        else:
+        if interaction.user.id != self.user_id:
             await interaction.response.defer()
+            return
+
+        # if the bot is in DMs, delete_original_response fails with this error:
+        # 404 Not Found (error code: 10015): Unknown Webhook
+        # but it works if we first "edit" the message that the component is on
+        await interaction.response.edit_message()
+        await interaction.delete_original_response()
 
 
-@dataclass
-class TemporaryDeleteButton(Button[Any]):
-    """A button that deletes the original interaction's message when pressed by the user
-    who created it.
+def get_command_usage_button(
+    interaction: Interaction,
+    command: AnyInteractionCommand,
+) -> Button[Any]:
+    match command:
+        case Command(qualified_name=command_name):
+            label = f"{interaction.user.name} used /{command_name}"
+        case _:
+            label = f"Sent by {interaction.user.name}"
+    bot = GHUtilsBot.of(interaction)
+    return Button(
+        emoji=bot.get_custom_emoji(CustomEmoji.apps_icon),
+        label=label,
+        disabled=True,
+    )
 
-    Will stop working after 15 minutes (ie. when the interaction expires), or when the
-    bot restarts.
-    """
 
-    original_interaction: Interaction
+@overload
+def add_visibility_buttons(
+    parent: View | LayoutView | ActionRow[Any] | Container[Any],
+    interaction: Interaction,
+    visibility: Literal["public"],
+    *,
+    command: AnyInteractionCommand,
+    show_usage: bool,
+) -> None: ...
 
-    def __post_init__(self):
-        super().__init__(emoji="🗑️")
 
-    async def callback(self, interaction: Interaction):
-        await interaction.response.defer()
-        if interaction.user == self.original_interaction.user:
-            await self.original_interaction.delete_original_response()
+@overload
+def add_visibility_buttons(
+    parent: View | LayoutView | ActionRow[Any] | Container[Any],
+    interaction: Interaction,
+    visibility: Literal["private"],
+    *,
+    send_as_public: Callable[[Interaction], Awaitable[Any]],
+) -> None: ...
+
+
+@overload
+def add_visibility_buttons(
+    parent: View | LayoutView | ActionRow[Any] | Container[Any],
+    interaction: Interaction,
+    visibility: MessageVisibility,
+    *,
+    command: AnyInteractionCommand,
+    show_usage: bool,
+    send_as_public: Callable[[Interaction], Awaitable[Any]],
+) -> None: ...
+
+
+def add_visibility_buttons(
+    parent: View | LayoutView | ActionRow[Any] | Container[Any],
+    interaction: Interaction,
+    visibility: MessageVisibility,
+    *,
+    command: AnyInteractionCommand = None,
+    show_usage: bool | None = None,
+    send_as_public: Callable[[Interaction], Awaitable[Any]] | None = None,
+):
+    match visibility:
+        case "private":
+            assert send_as_public is not None
+            parent.add_item(SendAsPublicButton(interaction, send_as_public))
+        case "public":
+            assert show_usage is not None
+            parent.add_item(DeleteButton(user_id=interaction.user.id))
+            if show_usage:
+                parent.add_item(get_command_usage_button(interaction, command))
