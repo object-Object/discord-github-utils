@@ -63,6 +63,7 @@ preview = true
 extend-select = [
     "I", # import sorting
     "RUF022", # __all__ sorting
+    "TID252", # ban relative imports
 ]
 extend-ignore = [
     # covered by Pyright
@@ -76,6 +77,9 @@ combine-as-imports = true
 known-first-party = [
     "ghutils",
 ]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "parents"
 
 # type checking
 

@@ -9,29 +9,9 @@ from discord.utils import MISSING
 
 from ghutils.core.bot import GHUtilsBot
 from ghutils.core.types import CustomEmoji
-
-from .commands import AnyInteractionCommand
+from ghutils.utils.discord.commands import AnyInteractionCommand
 
 type MessageVisibility = Literal["public", "private"]
-
-
-async def respond_with_visibility(
-    interaction: Interaction,
-    visibility: MessageVisibility,
-    *,
-    content: Any | None = None,
-    embed: Embed = MISSING,
-    embeds: Sequence[Embed] = MISSING,
-    items: list[Item[Any]] | None = None,
-):
-    data = MessageContents(
-        command=interaction.command,
-        content=content,
-        embed=embed,
-        embeds=embeds,
-        items=items if items is not None else [],
-    )
-    await data.send(interaction, visibility)
 
 
 @dataclass(kw_only=True)
@@ -164,21 +144,23 @@ class DeleteButton(
         await interaction.delete_original_response()
 
 
-def get_command_usage_button(
+async def respond_with_visibility(
     interaction: Interaction,
-    command: AnyInteractionCommand,
-) -> Button[Any]:
-    match command:
-        case Command(qualified_name=command_name):
-            label = f"{interaction.user.name} used /{command_name}"
-        case _:
-            label = f"Sent by {interaction.user.name}"
-    bot = GHUtilsBot.of(interaction)
-    return Button(
-        emoji=bot.get_custom_emoji(CustomEmoji.apps_icon),
-        label=label,
-        disabled=True,
+    visibility: MessageVisibility,
+    *,
+    content: Any | None = None,
+    embed: Embed = MISSING,
+    embeds: Sequence[Embed] = MISSING,
+    items: list[Item[Any]] | None = None,
+):
+    data = MessageContents(
+        command=interaction.command,
+        content=content,
+        embed=embed,
+        embeds=embeds,
+        items=items if items is not None else [],
     )
+    await data.send(interaction, visibility)
 
 
 @overload
@@ -232,3 +214,20 @@ def add_visibility_buttons(
             parent.add_item(DeleteButton(user_id=interaction.user.id))
             if show_usage:
                 parent.add_item(get_command_usage_button(interaction, command))
+
+
+def get_command_usage_button(
+    interaction: Interaction,
+    command: AnyInteractionCommand,
+) -> Button[Any]:
+    match command:
+        case Command(qualified_name=command_name):
+            label = f"{interaction.user.name} used /{command_name}"
+        case _:
+            label = f"Sent by {interaction.user.name}"
+    bot = GHUtilsBot.of(interaction)
+    return Button(
+        emoji=bot.get_custom_emoji(CustomEmoji.apps_icon),
+        label=label,
+        disabled=True,
+    )

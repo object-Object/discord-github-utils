@@ -16,10 +16,10 @@ from githubkit.rest import Artifact, FullRepository, ShortBranch, Workflow, Work
 from yarl import URL
 
 from ghutils.core.bot import GHUtilsBot
+from ghutils.ui.components.visibility import add_visibility_buttons
 from ghutils.utils.discord.commands import AnyInteractionCommand
 from ghutils.utils.discord.components import update_select_menu_default
 from ghutils.utils.discord.mentions import relative_timestamp
-from ghutils.utils.discord.visibility import add_visibility_buttons
 from ghutils.utils.github import gh_request
 from ghutils.utils.strings import join_truthy, truncate_str
 

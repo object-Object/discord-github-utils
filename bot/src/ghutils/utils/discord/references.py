@@ -14,9 +14,8 @@ from githubkit.rest import Commit, Issue, PullRequest
 from ghutils.core.bot import GHUtilsBot
 from ghutils.core.types import LoginState
 from ghutils.db.config import get_configs
-
-from ..github import RepositoryName, gh_request, shorten_sha
-from ..strings import truncate_str
+from ghutils.utils.github import RepositoryName, gh_request, shorten_sha
+from ghutils.utils.strings import truncate_str
 
 logger = logging.getLogger(__name__)
 

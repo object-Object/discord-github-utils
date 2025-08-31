@@ -4,13 +4,13 @@ from discord import Interaction
 from discord.ext.commands import Cog
 
 from ghutils.core.cog import GHUtilsCog
-from ghutils.utils.discord.commands import get_command, print_command
-from ghutils.utils.discord.components import (
+from ghutils.ui.components.refresh import (
     RefreshCommitButton,
     RefreshIssueButton,
     RefreshIssuesButton,
 )
-from ghutils.utils.discord.visibility import DeleteButton
+from ghutils.ui.components.visibility import DeleteButton
+from ghutils.utils.discord.commands import get_command, print_command
 
 logger = logging.getLogger(__name__)
 

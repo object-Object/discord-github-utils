@@ -24,20 +24,18 @@ from ghutils.db.models import (
     UserGitHubTokens,
     UserLogin,
 )
-from ghutils.utils.discord.components import RefreshCommitButton, RefreshIssueButton
-from ghutils.utils.discord.embeds import (
-    create_commit_embed,
-    create_issue_embed,
-    set_embed_author,
-)
+from ghutils.ui.components.refresh import RefreshCommitButton, RefreshIssueButton
+from ghutils.ui.components.visibility import MessageVisibility, respond_with_visibility
+from ghutils.ui.embeds.commits import create_commit_embed
+from ghutils.ui.embeds.issues import create_issue_embed
+from ghutils.ui.views.select_artifact import SelectArtifactView
+from ghutils.utils.discord.embeds import set_embed_author
 from ghutils.utils.discord.references import (
     CommitReference,
     IssueReference,
     PRReference,
 )
 from ghutils.utils.discord.transformers import RepositoryOption, UserOption
-from ghutils.utils.discord.views.select_artifact import SelectArtifactView
-from ghutils.utils.discord.visibility import MessageVisibility, respond_with_visibility
 from ghutils.utils.github import gh_request
 from ghutils.utils.l10n import translate_text
 

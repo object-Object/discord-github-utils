@@ -13,8 +13,7 @@ from githubkit.rest import FullRepository, PrivateUser, PublicUser
 from ghutils.core.bot import GHUtilsBot
 from ghutils.core.types import LoginState
 from ghutils.db.config import get_configs
-
-from ..github import RepositoryName, gh_request
+from ghutils.utils.github import RepositoryName, gh_request
 
 logger = logging.getLogger(__name__)
 

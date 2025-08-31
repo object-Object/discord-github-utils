@@ -9,8 +9,8 @@ from discord.app_commands import ContextMenu
 from discord.utils import Coro
 
 from ghutils.core.cog import GHUtilsCog
-from ghutils.utils.discord.components import RefreshIssuesButton
-from ghutils.utils.discord.embeds import create_issue_embeds
+from ghutils.ui.components.refresh import RefreshIssuesButton
+from ghutils.ui.embeds.issues import create_issue_embeds
 
 logger = logging.getLogger(__name__)
 
