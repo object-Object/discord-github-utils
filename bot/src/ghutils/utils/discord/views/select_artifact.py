@@ -49,7 +49,7 @@ class ArtifactContainer(Container[Any]):
         repo_url = URL("https://github.com") / repo.owner.login / repo.name
         workflow_url = repo_url / "actions/workflows" / stripped_workflow_path
 
-        self.description_text.content = "\n".join([
+        description = [
             f"## `{artifact.name}.zip`",
             f"**Workflow:** [{workflow.name}]({workflow_url})"
             + (
@@ -58,19 +58,24 @@ class ArtifactContainer(Container[Any]):
                 else ""
             ),
             f"**Workflow run:** [{workflow_run.display_title}]({workflow_run.html_url})",
-            *(
-                f"**{name}:** {relative_timestamp(time)}"
-                for name, time in [
-                    ("Created", artifact.created_at),
-                    ("Updated", artifact.updated_at),
-                    (
-                        "Expire" + ("d" if artifact.expired else "s"),
-                        artifact.expires_at,
-                    ),
-                ]
-                if time
-            ),
-        ])
+        ]
+        if artifact.created_at:
+            description.append(
+                f"**Created:** {relative_timestamp(artifact.created_at)}"
+            )
+            if (
+                artifact.updated_at
+                and (artifact.updated_at - artifact.created_at).total_seconds() >= 1
+            ):
+                description.append(
+                    f"**Updated:** {relative_timestamp(artifact.updated_at)}"
+                )
+        if artifact.expires_at:
+            d_s = "d" if artifact.expired else "s"
+            description.append(
+                f"**Expire{d_s}:** {relative_timestamp(artifact.expires_at)}"
+            )
+        self.description_text.content = "\n".join(description)
 
         self.button_row.clear_items()
         self.button_row.add_item(
