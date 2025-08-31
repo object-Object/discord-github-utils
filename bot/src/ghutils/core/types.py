@@ -19,6 +19,7 @@ class LoginState(Enum):
 
 class CustomEmoji(Enum):
     apps_icon = "apps_icon.png"
+    nightly_link = "nightly_link.png"
 
     def __init__(self, filename: str):
         self.filename = filename

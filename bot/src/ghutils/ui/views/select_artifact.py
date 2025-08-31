@@ -16,6 +16,7 @@ from githubkit.rest import Artifact, FullRepository, ShortBranch, Workflow, Work
 from yarl import URL
 
 from ghutils.core.bot import GHUtilsBot
+from ghutils.core.types import CustomEmoji
 from ghutils.ui.components.visibility import add_visibility_buttons
 from ghutils.utils.discord.commands import AnyInteractionCommand
 from ghutils.utils.discord.components import update_select_menu_default
@@ -35,6 +36,7 @@ class ArtifactContainer(Container[Any]):
 
     def set_artifact(
         self,
+        bot: GHUtilsBot,
         repo: FullRepository,
         branch: str | None,
         workflow: Workflow,
@@ -95,6 +97,7 @@ class ArtifactContainer(Container[Any]):
         if branch and is_normal:
             self.button_row.add_item(
                 Button(
+                    emoji=bot.get_custom_emoji(CustomEmoji.nightly_link),
                     label="nightly.link",
                     url=str(
                         URL("https://nightly.link")
@@ -118,6 +121,7 @@ class SelectArtifactView(LayoutView):
     def __init__(
         self,
         *,
+        bot: GHUtilsBot,
         github: GitHub[Any],
         command: AnyInteractionCommand,
         repo: FullRepository,
@@ -126,6 +130,7 @@ class SelectArtifactView(LayoutView):
     ):
         super().__init__(timeout=5 * 60)
 
+        self.bot = bot
         self.github = github
         self.command = command
         self.repo = repo
@@ -179,7 +184,7 @@ class SelectArtifactView(LayoutView):
             )
 
             return cls(
-                # this is *probably* fine?
+                bot=GHUtilsBot.of(interaction),
                 github=github,
                 command=interaction.command,
                 repo=repo,
@@ -286,6 +291,7 @@ class SelectArtifactView(LayoutView):
 
         assert self.workflow and self.workflow_run
         self.result_container.set_artifact(
+            self.bot,
             self.repo,
             self.branch,
             self.workflow,
