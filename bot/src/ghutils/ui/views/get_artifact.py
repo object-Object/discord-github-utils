@@ -26,7 +26,7 @@ from ghutils.utils.github import gh_request
 from ghutils.utils.strings import join_truthy, truncate_str
 
 
-class SelectArtifactView(LayoutView):
+class GetArtifactView(LayoutView):
     bot: GHUtilsBot
     github: GitHub[Any]
     command: AnyInteractionCommand

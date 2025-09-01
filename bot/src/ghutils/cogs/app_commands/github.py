@@ -28,7 +28,7 @@ from ghutils.ui.components.refresh import RefreshCommitButton, RefreshIssueButto
 from ghutils.ui.components.visibility import MessageVisibility, respond_with_visibility
 from ghutils.ui.embeds.commits import create_commit_embed
 from ghutils.ui.embeds.issues import create_issue_embed
-from ghutils.ui.views.select_artifact import SelectArtifactView
+from ghutils.ui.views.get_artifact import GetArtifactView
 from ghutils.utils.discord.embeds import set_embed_author
 from ghutils.utils.discord.references import (
     CommitReference,
@@ -332,7 +332,7 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
         @app_commands.command()
         async def artifact(self, interaction: Interaction, repo: RepositoryOption):
             await interaction.response.defer(ephemeral=True)
-            view = await SelectArtifactView.new(interaction, repo)
+            view = await GetArtifactView.new(interaction, repo)
             await interaction.followup.send(view=view, ephemeral=True)
 
     class Search(SubGroup):
