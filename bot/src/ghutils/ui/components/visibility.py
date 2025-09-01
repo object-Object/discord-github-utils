@@ -4,12 +4,13 @@ from typing import Any, Awaitable, Callable, Literal, Sequence, overload
 
 from discord import Embed, Interaction
 from discord.app_commands import Command
-from discord.ui import ActionRow, Button, Container, DynamicItem, Item, LayoutView, View
+from discord.ui import Button, DynamicItem, Item, LayoutView, View
 from discord.utils import MISSING
 
 from ghutils.core.bot import GHUtilsBot
 from ghutils.core.types import CustomEmoji
 from ghutils.utils.discord.commands import AnyInteractionCommand
+from ghutils.utils.discord.components import AnyComponentParent
 
 type MessageVisibility = Literal["public", "private"]
 
@@ -165,7 +166,7 @@ async def respond_with_visibility(
 
 @overload
 def add_visibility_buttons(
-    parent: View | LayoutView | ActionRow[Any] | Container[Any],
+    parent: AnyComponentParent,
     interaction: Interaction,
     visibility: Literal["public"],
     *,
@@ -176,7 +177,7 @@ def add_visibility_buttons(
 
 @overload
 def add_visibility_buttons(
-    parent: View | LayoutView | ActionRow[Any] | Container[Any],
+    parent: AnyComponentParent,
     interaction: Interaction,
     visibility: Literal["private"],
     *,
@@ -186,7 +187,7 @@ def add_visibility_buttons(
 
 @overload
 def add_visibility_buttons(
-    parent: View | LayoutView | ActionRow[Any] | Container[Any],
+    parent: AnyComponentParent,
     interaction: Interaction,
     visibility: MessageVisibility,
     *,
@@ -197,7 +198,7 @@ def add_visibility_buttons(
 
 
 def add_visibility_buttons(
-    parent: View | LayoutView | ActionRow[Any] | Container[Any],
+    parent: AnyComponentParent,
     interaction: Interaction,
     visibility: MessageVisibility,
     *,

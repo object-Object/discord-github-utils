@@ -1,4 +1,4 @@
-from typing import Any, Self
+from typing import Any, Iterable, Self
 
 import humanize
 from discord import ButtonStyle, Interaction, SelectOption
@@ -17,6 +17,11 @@ from yarl import URL
 
 from ghutils.core.bot import GHUtilsBot
 from ghutils.core.types import CustomEmoji
+from ghutils.ui.components.paginated_select import (
+    MAX_PAGE_LENGTH,
+    PaginatedSelect,
+    paginated_select,
+)
 from ghutils.ui.components.visibility import add_visibility_buttons
 from ghutils.utils.discord.commands import AnyInteractionCommand
 from ghutils.utils.discord.components import update_select_menu_default
@@ -116,7 +121,6 @@ class ArtifactContainer(Container[Any]):
             self.footer_text.content += f"@{branch}"
 
 
-# TODO: add text inputs if there are >25 options
 class SelectArtifactView(LayoutView):
     def __init__(
         self,
@@ -154,9 +158,9 @@ class SelectArtifactView(LayoutView):
             for workflow in workflows
         ]
 
-        self.branch_select.options = [
-            SelectOption(label=branch.name) for branch in branches
-        ]
+        self.branch_select.options = _get_branch_options(branches)
+
+        self.branch_row.add_item(self.branch_select)
 
         self.clear_items()
         self.add_item(self.workflow_label_text)
@@ -179,7 +183,7 @@ class SelectArtifactView(LayoutView):
                 github.rest.repos.async_list_branches(
                     owner=repo.owner.login,
                     repo=repo.name,
-                    per_page=25,
+                    per_page=MAX_PAGE_LENGTH,
                 )
             )
 
@@ -327,13 +331,16 @@ class SelectArtifactView(LayoutView):
 
     branch_row = ActionRow[Any]()
 
-    @branch_row.select(
+    @paginated_select(
         min_values=0,
         max_values=1,
     )
-    async def branch_select(self, interaction: Interaction, select: Select[Any]):
-        selected = update_select_menu_default(select)
-        branch = selected.value if selected else None
+    async def branch_select(
+        self,
+        interaction: Interaction,
+        select: PaginatedSelect[Any],
+    ):
+        branch = select.selected_option.value if select.selected_option else None
 
         if self.branch != branch:
             self.branch = branch
@@ -341,6 +348,23 @@ class SelectArtifactView(LayoutView):
             await interaction.response.edit_message(view=self)
         else:
             await interaction.response.defer()
+
+    @branch_select.page_getter()
+    async def branch_select_page_getter(
+        self,
+        interaction: Interaction,
+        select: PaginatedSelect[Any],
+        page: int,
+    ) -> list[SelectOption]:
+        branches = await gh_request(
+            self.github.rest.repos.async_list_branches(
+                owner=self.repo.owner.login,
+                repo=self.repo.name,
+                per_page=MAX_PAGE_LENGTH,
+                page=page,
+            )
+        )
+        return _get_branch_options(branches)
 
     # artifact
 
@@ -393,3 +417,7 @@ class SelectArtifactView(LayoutView):
         await interaction.response.edit_message()
         await interaction.delete_original_response()
         await interaction.followup.send(view=self, ephemeral=False)
+
+
+def _get_branch_options(branches: Iterable[ShortBranch]) -> list[SelectOption]:
+    return [SelectOption(label=branch.name) for branch in branches]

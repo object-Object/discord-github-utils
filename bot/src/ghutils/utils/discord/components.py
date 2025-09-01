@@ -1,7 +1,9 @@
 from typing import Any, Literal, overload
 
 from discord import SelectOption
-from discord.ui import Select
+from discord.ui import ActionRow, Container, LayoutView, Select, View
+
+type AnyComponentParent = View | LayoutView | ActionRow[Any] | Container[Any]
 
 
 def update_select_menu_defaults(select: Select[Any]) -> list[SelectOption]:
