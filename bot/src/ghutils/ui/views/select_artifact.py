@@ -1,4 +1,4 @@
-from typing import Any, Iterable, Self
+from typing import Any, Self
 
 import humanize
 from discord import ButtonStyle, Interaction, SelectOption
@@ -8,11 +8,10 @@ from discord.ui import (
     Container,
     LayoutView,
     Section,
-    Select,
     TextDisplay,
 )
 from githubkit import GitHub
-from githubkit.rest import Artifact, FullRepository, ShortBranch, Workflow, WorkflowRun
+from githubkit.rest import Artifact, FullRepository, Workflow, WorkflowRun
 from yarl import URL
 
 from ghutils.core.bot import GHUtilsBot
@@ -24,7 +23,6 @@ from ghutils.ui.components.paginated_select import (
 )
 from ghutils.ui.components.visibility import add_visibility_buttons
 from ghutils.utils.discord.commands import AnyInteractionCommand
-from ghutils.utils.discord.components import update_select_menu_default
 from ghutils.utils.discord.mentions import relative_timestamp
 from ghutils.utils.github import gh_request
 from ghutils.utils.strings import join_truthy, truncate_str
@@ -122,6 +120,20 @@ class ArtifactContainer(Container[Any]):
 
 
 class SelectArtifactView(LayoutView):
+    bot: GHUtilsBot
+    github: GitHub[Any]
+    command: AnyInteractionCommand
+    repo: FullRepository
+
+    workflows: dict[int, Workflow]
+    artifacts: dict[str, Artifact]
+
+    workflow: Workflow | None
+    workflow_run: WorkflowRun | None
+    branch: str | None
+    artifact: Artifact | None
+    previous_artifact_name: str | None
+
     def __init__(
         self,
         *,
@@ -129,9 +141,9 @@ class SelectArtifactView(LayoutView):
         github: GitHub[Any],
         command: AnyInteractionCommand,
         repo: FullRepository,
-        workflows: list[Workflow],
-        branches: list[ShortBranch],
     ):
+        """Do not use this constructor directly!"""
+
         super().__init__(timeout=5 * 60)
 
         self.bot = bot
@@ -139,28 +151,18 @@ class SelectArtifactView(LayoutView):
         self.command = command
         self.repo = repo
 
-        self.workflows = {workflow.id: workflow for workflow in workflows}
-        self.artifacts: dict[str, Artifact] = {}
+        self.workflows = {}
+        self.artifacts = {}
 
-        self.workflow: Workflow | None = None
-        self.workflow_run: WorkflowRun | None = None
-        self.branch: str | None = None
-        self.artifact: Artifact | None = None
+        self.workflow = None
+        self.workflow_run = None
+        self.branch = None
+        self.artifact = None
+        self.previous_artifact_name = None
 
-        self.workflow_select.options = [
-            SelectOption(
-                label=truncate_str(workflow.name, 100),
-                value=str(workflow.id),
-                description=truncate_str(
-                    workflow.path.removeprefix(WORKFLOW_PREFIX), 100
-                ),
-            )
-            for workflow in workflows
-        ]
-
-        self.branch_select.options = _get_branch_options(branches)
-
+        self.workflow_row.add_item(self.workflow_select)
         self.branch_row.add_item(self.branch_select)
+        self.artifact_select_row.add_item(self.artifact_select)
 
         self.clear_items()
         self.add_item(self.workflow_label_text)
@@ -168,41 +170,30 @@ class SelectArtifactView(LayoutView):
         self.add_item(self.branch_label_text)
         self.add_item(self.branch_row)
 
+    async def async_init(self, interaction: Interaction) -> Self:
+        await self.workflow_select.fetch_first_page(interaction)
+        await self.branch_select.fetch_first_page(interaction)
+        return self
+
     @classmethod
     async def new(cls, interaction: Interaction, repo: FullRepository) -> Self:
         async with GHUtilsBot.github_app_of(interaction) as (github, _):
-            workflows_response = await gh_request(
-                github.rest.actions.async_list_repo_workflows(
-                    owner=repo.owner.login,
-                    repo=repo.name,
-                    per_page=25,
-                )
-            )
-
-            branches = await gh_request(
-                github.rest.repos.async_list_branches(
-                    owner=repo.owner.login,
-                    repo=repo.name,
-                    per_page=MAX_PAGE_LENGTH,
-                )
-            )
-
-            return cls(
+            return await cls(
                 bot=GHUtilsBot.of(interaction),
                 github=github,
                 command=interaction.command,
                 repo=repo,
-                workflows=workflows_response.workflows,
-                branches=branches,
-            )
+            ).async_init(interaction)
 
-    async def refresh_artifacts(self):
+    async def refresh_artifacts(self, interaction: Interaction):
         if self.workflow is None:
             return
 
-        old_artifact_name = self.artifact.name if self.artifact else None
+        self.previous_artifact_name = self.artifact.name if self.artifact else None
         self.artifact = None
         self.workflow_run = None
+        self.artifact_select.clear_cached_pages()
+        self.artifacts.clear()
 
         self.remove_item(self.artifact_label_text)
         self.remove_item(self.artifact_select_row)
@@ -236,42 +227,18 @@ class SelectArtifactView(LayoutView):
 
             self.workflow_run = run = runs[0]
 
-            artifacts = (
-                await github.rest.actions.async_list_workflow_run_artifacts(
-                    owner=self.repo.owner.login,
-                    repo=self.repo.name,
-                    run_id=run.id,
-                    per_page=25,
-                )
-            ).parsed_data.artifacts
-
-            if not artifacts:
+            await self.artifact_select.fetch_first_page(interaction)
+            if not self.artifact_select.options:
                 self.set_error("❌ No artifacts found.", URL(run.html_url))
                 return
-
-            self.artifacts.clear()
-            self.artifact_select.options.clear()
-
-            for artifact in artifacts:
-                self.artifacts[artifact.name] = artifact
-                self.artifact_select.options.append(
-                    SelectOption(
-                        label=artifact.name,
-                        description=join_truthy(
-                            " ",
-                            artifact.created_at
-                            and "Created " + humanize.naturaltime(artifact.created_at),
-                            artifact.expired and "(expired)",
-                        ),
-                        default=old_artifact_name == artifact.name,
-                    )
-                )
 
             self.add_item(self.artifact_label_text)
             self.add_item(self.artifact_select_row)
 
-            if old_artifact_name in self.artifacts:
-                self.set_artifact(old_artifact_name)
+            if self.previous_artifact_name in self.artifacts:
+                self.set_artifact(self.previous_artifact_name)
+
+            self.previous_artifact_name = None
 
     def set_error(self, message: str, url: URL):
         self.error_section.clear_items()
@@ -311,19 +278,54 @@ class SelectArtifactView(LayoutView):
 
     workflow_row = ActionRow[Any]()
 
-    @workflow_row.select(
+    @paginated_select(
         min_values=1,
         max_values=1,
     )
-    async def workflow_select(self, interaction: Interaction, select: Select[Any]):
-        workflow_id = int(update_select_menu_default(select, True).value)
+    async def workflow_select(
+        self,
+        interaction: Interaction,
+        select: PaginatedSelect[Any],
+    ):
+        assert select.selected_option
+        workflow_id = int(select.selected_option.value)
 
         if self.workflow is None or self.workflow.id != workflow_id:
             self.workflow = self.workflows[workflow_id]
-            await self.refresh_artifacts()
+            await self.refresh_artifacts(interaction)
             await interaction.response.edit_message(view=self)
         else:
             await interaction.response.defer()
+
+    @workflow_select.page_getter()
+    async def workflow_select_page_getter(
+        self,
+        interaction: Interaction,
+        select: PaginatedSelect[Any],
+        page: int,
+    ) -> list[SelectOption]:
+        workflows = (
+            await self.github.rest.actions.async_list_repo_workflows(
+                owner=self.repo.owner.login,
+                repo=self.repo.name,
+                per_page=MAX_PAGE_LENGTH,
+                page=page,
+            )
+        ).parsed_data.workflows
+
+        options = list[SelectOption]()
+        for workflow in workflows:
+            self.workflows[workflow.id] = workflow
+            options.append(
+                SelectOption(
+                    label=truncate_str(workflow.name, 100),
+                    value=str(workflow.id),
+                    description=truncate_str(
+                        workflow.path.removeprefix(WORKFLOW_PREFIX), 100
+                    ),
+                )
+            )
+        return options
 
     # branch
 
@@ -344,7 +346,7 @@ class SelectArtifactView(LayoutView):
 
         if self.branch != branch:
             self.branch = branch
-            await self.refresh_artifacts()
+            await self.refresh_artifacts(interaction)
             await interaction.response.edit_message(view=self)
         else:
             await interaction.response.defer()
@@ -364,7 +366,7 @@ class SelectArtifactView(LayoutView):
                 page=page,
             )
         )
-        return _get_branch_options(branches)
+        return [SelectOption(label=branch.name) for branch in branches]
 
     # artifact
 
@@ -372,17 +374,62 @@ class SelectArtifactView(LayoutView):
 
     artifact_select_row = ActionRow[Any]()
 
-    @artifact_select_row.select(
+    @paginated_select(
         min_values=1,
         max_values=1,
     )
-    async def artifact_select(self, interaction: Interaction, select: Select[Any]):
-        artifact_name = update_select_menu_default(select, True).value
+    async def artifact_select(
+        self,
+        interaction: Interaction,
+        select: PaginatedSelect[Any],
+    ):
+        assert select.selected_option
+        artifact_name = select.selected_option.value
 
         if self.set_artifact(artifact_name):
             await interaction.response.edit_message(view=self)
         else:
             await interaction.response.defer()
+
+    @artifact_select.page_getter()
+    async def artifact_select_page_getter(
+        self,
+        interaction: Interaction,
+        select: PaginatedSelect[Any],
+        page: int,
+    ) -> list[SelectOption]:
+        if not self.workflow_run:
+            return []
+
+        artifacts = (
+            await self.github.rest.actions.async_list_workflow_run_artifacts(
+                owner=self.repo.owner.login,
+                repo=self.repo.name,
+                run_id=self.workflow_run.id,
+                per_page=MAX_PAGE_LENGTH,
+                page=page,
+            )
+        ).parsed_data.artifacts
+
+        if not artifacts:
+            return []
+
+        options = list[SelectOption]()
+        for artifact in artifacts:
+            self.artifacts[artifact.name] = artifact
+            options.append(
+                SelectOption(
+                    label=artifact.name,
+                    description=join_truthy(
+                        " ",
+                        artifact.created_at
+                        and "Created " + humanize.naturaltime(artifact.created_at),
+                        artifact.expired and "(expired)",
+                    ),
+                    default=self.previous_artifact_name == artifact.name,
+                )
+            )
+        return options
 
     # result
 
@@ -417,7 +464,3 @@ class SelectArtifactView(LayoutView):
         await interaction.response.edit_message()
         await interaction.delete_original_response()
         await interaction.followup.send(view=self, ephemeral=False)
-
-
-def _get_branch_options(branches: Iterable[ShortBranch]) -> list[SelectOption]:
-    return [SelectOption(label=branch.name) for branch in branches]

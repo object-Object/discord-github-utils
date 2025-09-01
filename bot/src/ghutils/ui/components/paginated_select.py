@@ -78,6 +78,14 @@ class PaginatedSelect[V: View | LayoutView](Select[V]):
             # reuse the logic in the decorator
             self.options = options
 
+    async def fetch_first_page(self, interaction: Interaction):
+        """Fetch and switch to page 1."""
+        self._page_cache.pop(1, None)
+        await self._switch_to_page(interaction, 1)
+
+    def clear_cached_pages(self):
+        self._page_cache.clear()
+
     @property
     def page_getter(self):
         """A decorator to set the page getter function.
@@ -189,10 +197,18 @@ class PaginatedSelect[V: View | LayoutView](Select[V]):
             if PREVIOUS_PAGE_VALUE in selected:
                 # go to previous page
                 await self._switch_to_page(interaction, self._page - 1)
+                if interaction.response.is_done():
+                    await interaction.edit_original_response(view=self.view)
+                else:
+                    await interaction.response.edit_message(view=self.view)
 
             elif NEXT_PAGE_VALUE in selected:
                 # go to next page
                 await self._switch_to_page(interaction, self._page + 1)
+                if interaction.response.is_done():
+                    await interaction.edit_original_response(view=self.view)
+                else:
+                    await interaction.response.edit_message(view=self.view)
 
             else:
                 # normal selection
@@ -264,11 +280,6 @@ class PaginatedSelect[V: View | LayoutView](Select[V]):
             ].description = f"(selected on page {self._selected_page})"
         else:
             self.placeholder = None
-
-        if interaction.response.is_done():
-            await interaction.edit_original_response(view=self.view)
-        else:
-            await interaction.response.edit_message(view=self.view)
 
     def _clear_remote_page_selection(self):
         self.placeholder = None
