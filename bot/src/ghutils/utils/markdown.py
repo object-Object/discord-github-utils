@@ -4,7 +4,7 @@ from typing import override
 from marko import Markdown
 from marko.block import HTMLBlock
 from marko.ext.gfm import GFM
-from marko.inline import Image, InlineHTML
+from marko.inline import Image, InlineHTML, LineBreak
 from marko.md_renderer import MarkdownRenderer
 
 
@@ -20,6 +20,12 @@ class DiscordMarkdownRenderer(MarkdownRenderer):
     @override
     def render_image(self, element: Image) -> str:
         return super().render_image(element).removeprefix("!")
+
+    @override
+    def render_line_break(self, element: LineBreak) -> str:
+        # MarkdownRenderer inserts a backslash before "non-soft" (?) line breaks
+        # Discord doesn't render that properly, so just always return \n
+        return "\n"
 
 
 _HTML_COMMENT_PATTERN = re.compile(r"<!--.*?-->", flags=re.DOTALL)
