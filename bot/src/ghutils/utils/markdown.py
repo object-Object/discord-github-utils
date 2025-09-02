@@ -19,7 +19,7 @@ class DiscordMarkdownRenderer(MarkdownRenderer):
         return _strip_html_comments(super().render_inline_html(element))
 
 
-_HTML_COMMENT_PATTERN = re.compile(r"<!--.*?-->")
+_HTML_COMMENT_PATTERN = re.compile(r"<!--.*?-->", flags=re.DOTALL)
 
 
 def _strip_html_comments(text: str) -> str:
