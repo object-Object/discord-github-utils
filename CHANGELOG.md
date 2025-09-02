@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Pydantic's HISTORY.md](https://github.com/pydantic/pydantic/blob/main/HISTORY.md), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## `0.5.1` - 2025-09-01
+
+### Changed
+
+* Markdown images are now formatted like `[alt text](link)` instead of `![alt text](link)`.
+* Improved Markdown whitespace stripping.
+* Increased the Markdown description length limit to 512, and added a maximum line count of 16.
+
+### Fixed
+
+* Fixed multi-line HTML comments not being removed from descriptions.
+
 ## `0.5.0` - 2025-09-01
 
 ### Added
