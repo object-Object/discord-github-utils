@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Pydantic's HISTORY.md](https://github.com/pydantic/pydantic/blob/main/HISTORY.md), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## `0.5.0` - 2025-09-01
+
+### Added
+
+* Added `/gh release` to get a link to a specific GitHub release, or to open a menu to select one.
+
+### Changed
+
+* Added the [nightly.link](https://nightly.link) icon to the button in `/gh actions artifact`.
+* The select menus in `/gh actions artifact` are now paginated.
+
+### Fixed
+
+* Issue/PR descriptions are now parsed as Markdown to remove HTML comments and unnecessary whitespace (fixes [#6](https://github.com/object-Object/discord-github-utils/issues/6)).
+
 ## `0.4.1` - 2025-08-31
 
 ### Changed
