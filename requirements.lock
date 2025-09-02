@@ -128,6 +128,8 @@ jsii==1.103.1
     # via constructs
 markdown-it-py==3.0.0
     # via rich
+marko==2.2.0
+    # via ghutils-bot
 markupsafe==2.1.5
     # via jinja2
 mdurl==0.1.2

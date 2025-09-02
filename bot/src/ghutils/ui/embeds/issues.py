@@ -9,7 +9,7 @@ from githubkit import GitHub
 from githubkit.rest import Issue, IssuePropPullRequest, PullRequest
 
 from ghutils.ui.components.visibility import MessageContents
-from ghutils.utils.discord.embeds import set_embed_author
+from ghutils.utils.discord.embeds import set_embed_author, truncate_markdown_description
 from ghutils.utils.discord.references import IssueReference, IssueReferenceTransformer
 from ghutils.utils.github import IssueState, PullRequestState, RepositoryName
 from ghutils.utils.strings import truncate_str
@@ -42,7 +42,7 @@ def create_issue_embed(
     )
 
     if issue.body and add_body:
-        embed.description = truncate_str(issue.body, 200)
+        embed.description = truncate_markdown_description(issue.body)
 
     if issue.user:
         set_embed_author(embed, issue.user)

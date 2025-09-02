@@ -7,7 +7,7 @@ from discord import Embed
 from discord.ui import Button, Item
 from githubkit.rest import Release
 
-from ghutils.utils.discord.embeds import set_embed_author
+from ghutils.utils.discord.embeds import set_embed_author, truncate_markdown_description
 from ghutils.utils.github import ReleaseState, RepositoryName, get_reactions_by_emoji
 from ghutils.utils.strings import truncate_str
 
@@ -57,7 +57,7 @@ def create_release_embed(
         )
 
     if release.body and add_body:
-        embed.description = truncate_str(release.body, 200)
+        embed.description = truncate_markdown_description(release.body)
 
     if release.author:
         set_embed_author(embed, release.author)

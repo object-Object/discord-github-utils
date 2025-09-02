@@ -22,6 +22,7 @@ dependencies = [
     "pylette>=4.0.0",
     "humanize>=4.13.0",
     "babel>=2.17.0",
+    "marko>=2.2.0",
 ]
 
 [tool.rye]

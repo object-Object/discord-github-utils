@@ -9,7 +9,7 @@ from githubkit import GitHub
 from githubkit.exception import GitHubException
 from githubkit.rest import Commit, SimpleUser
 
-from ghutils.utils.discord.embeds import set_embed_author
+from ghutils.utils.discord.embeds import set_embed_author, truncate_markdown_description
 from ghutils.utils.github import (
     CommitCheckState,
     RepositoryName,
@@ -35,7 +35,7 @@ async def create_commit_embed(
     description = None
     if "\n" in message:
         message, description = message.split("\n", maxsplit=1)
-        description = truncate_str(description.strip(), 200)
+        description = truncate_markdown_description(description)
 
     embed = Embed(
         title=truncate_str(f"[{short_sha}] {message}", 256),
