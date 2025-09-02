@@ -1,4 +1,3 @@
-import dataclasses
 import re
 from typing import override
 
@@ -33,7 +32,6 @@ def _strip_html_comments(text: str) -> str:
 def reflow_markdown(text: str) -> str:
     md = Markdown(
         renderer=DiscordMarkdownRenderer,
-        # don't render as GFM
-        extensions=[dataclasses.replace(GFM, renderer_mixins=[])],
+        extensions=[GFM],
     )
     return md.convert(text)
