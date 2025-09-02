@@ -7,7 +7,6 @@ from discord import Embed
 from githubkit.rest import SimpleUser
 
 from ghutils.utils.markdown import reflow_markdown
-from ghutils.utils.strings import truncate_str
 
 
 def set_embed_author(embed: Embed, user: SimpleUser):
