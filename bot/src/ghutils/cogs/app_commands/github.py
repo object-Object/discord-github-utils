@@ -28,7 +28,9 @@ from ghutils.ui.components.refresh import RefreshCommitButton, RefreshIssueButto
 from ghutils.ui.components.visibility import MessageVisibility, respond_with_visibility
 from ghutils.ui.embeds.commits import create_commit_embed
 from ghutils.ui.embeds.issues import create_issue_embed
+from ghutils.ui.embeds.releases import create_release_embed, create_release_items
 from ghutils.ui.views.get_artifact import GetArtifactView
+from ghutils.ui.views.get_release import GetReleaseView
 from ghutils.utils.discord.embeds import set_embed_author
 from ghutils.utils.discord.references import (
     CommitReference,
@@ -36,7 +38,7 @@ from ghutils.utils.discord.references import (
     PRReference,
 )
 from ghutils.utils.discord.transformers import RepositoryOption, UserOption
-from ghutils.utils.github import gh_request
+from ghutils.utils.github import ReleaseState, RepositoryName, gh_request
 from ghutils.utils.l10n import translate_text
 
 logger = logging.getLogger(__name__)
@@ -224,6 +226,46 @@ class GitHubCog(GHUtilsCog, GroupCog, group_name="gh"):
         embed.set_footer(text=footer_text)
 
         await respond_with_visibility(interaction, visibility, embed=embed)
+
+    @app_commands.command()
+    async def release(
+        self,
+        interaction: Interaction,
+        repo: RepositoryOption,
+        tag: str | None = None,
+        visibility: MessageVisibility = "private",
+    ):
+        if not tag:
+            view = await GetReleaseView.new(interaction, repo, visibility)
+            await interaction.response.send_message(view=view, ephemeral=True)
+            return
+
+        async with self.bot.github_app(interaction) as (github, _):
+            try:
+                release = await gh_request(
+                    github.rest.repos.async_get_release_by_tag(
+                        owner=repo.owner.login,
+                        repo=repo.name,
+                        tag=tag,
+                    )
+                )
+            except RequestFailed as e:
+                if e.response.status_code == 404:  # pyright: ignore[reportUnknownMemberType]
+                    raise InvalidInputError(
+                        value=tag,
+                        message="No release found for tag.",
+                    )
+                raise
+
+            repo_name = RepositoryName.from_repo(repo)
+            state = await ReleaseState.of(github, repo_name, release)
+
+            await respond_with_visibility(
+                interaction,
+                visibility,
+                embed=create_release_embed(repo_name, release, state),
+                items=create_release_items(release),
+            )
 
     @app_commands.command()
     async def login(self, interaction: Interaction):

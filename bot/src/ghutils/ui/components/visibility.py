@@ -61,6 +61,19 @@ class MessageContents:
             view=self._get_view(interaction, visibility, show_usage),
         )
 
+    async def edit_message(
+        self,
+        interaction: Interaction,
+        visibility: MessageVisibility,
+        show_usage: bool = False,
+    ):
+        await interaction.response.edit_message(
+            content=self.content,
+            embed=self.embed,
+            embeds=self.embeds,
+            view=self._get_view(interaction, visibility, show_usage),
+        )
+
     async def edit_original_response(
         self,
         interaction: Interaction,

@@ -4,11 +4,19 @@ import re
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Awaitable, Callable, List, Self, cast, overload
+from typing import Any, Awaitable, Callable, List, Literal, Self, cast, overload
 
 from discord import Color
-from githubkit import Paginator, Response
-from githubkit.rest import Issue, IssuePropPullRequest, PullRequest
+from githubkit import GitHub, Paginator, Response
+from githubkit.rest import (
+    FullRepository,
+    Issue,
+    IssuePropPullRequest,
+    PullRequest,
+    ReactionRollup,
+    Release,
+    Repository,
+)
 
 
 class IssueState(Enum):
@@ -84,6 +92,47 @@ class CommitCheckState(Enum):
         self.color = color
 
 
+class ReleaseState(Enum):
+    NORMAL = None
+    LATEST = Color.from_rgb(63, 185, 80)
+    PRE_RELEASE = Color.from_rgb(210, 153, 34)
+    DRAFT = Color.from_rgb(101, 108, 118)
+
+    def __init__(self, color: Color | None):
+        self.color = color
+
+    @classmethod
+    async def of(
+        cls,
+        github: GitHub[Any],
+        repo: RepositoryName,
+        release: Release,
+    ) -> ReleaseState:
+        if release.draft:
+            return ReleaseState.DRAFT
+
+        if release.prerelease:
+            return ReleaseState.PRE_RELEASE
+
+        latest_release = await gh_request(
+            github.rest.repos.async_get_latest_release(repo.owner, repo.repo)
+        )
+        if release.id == latest_release.id:
+            return ReleaseState.LATEST
+
+        return ReleaseState.NORMAL
+
+    @property
+    def title(self):
+        match self:
+            case ReleaseState.NORMAL | ReleaseState.LATEST:
+                return "Release"
+            case ReleaseState.PRE_RELEASE:
+                return "Pre-release"
+            case ReleaseState.DRAFT:
+                return "Draft"
+
+
 _REPOSITORY_NAME_URL_PATTERN = re.compile(
     r"github.com/(?P<owner>[^/]+)/(?P<repo>[^/]+)"
 )
@@ -118,6 +167,10 @@ class RepositoryName:
         if not match:
             raise ValueError("GitHub URL not found")
         return cls(owner=match["owner"], repo=match["repo"])
+
+    @classmethod
+    def from_repo(cls, repo: Repository | FullRepository) -> Self:
+        return cls(owner=repo.owner.login, repo=repo.name)
 
     def __str__(self) -> str:
         return f"{self.owner}/{self.repo}"
@@ -195,3 +248,40 @@ def issue_or_pr_state(issue: Issue | PullRequest) -> IssueState | PullRequestSta
     if isinstance(issue, PullRequest):
         return PullRequestState.of(issue)
     return PullRequestState.of(issue) or IssueState.of(issue)
+
+
+_LINK_PATTERN = re.compile(
+    r'<(?P<url>.+?)>;\s*rel="(?P<rel>prev|next|last|first)"',
+    re.IGNORECASE,
+)
+
+
+type LinkRel = Literal["prev", "next", "last", "first"]
+
+
+def get_page_urls(response: Response[Any]) -> dict[LinkRel, str]:
+    """https://docs.github.com/en/rest/using-the-rest-api/using-pagination-in-the-rest-api"""
+    links = dict[LinkRel, str]()
+    for link in response.headers.get_list("link", split_commas=True):
+        if match := _LINK_PATTERN.search(link):
+            name = match["rel"].lower()
+            if name in ("prev", "next", "last", "first"):
+                links[name] = match["url"]
+    return links
+
+
+def is_last_page(response: Response[Any]) -> bool:
+    return "next" not in get_page_urls(response)
+
+
+def get_reactions_by_emoji(reactions: ReactionRollup) -> dict[str, int]:
+    return {
+        "👍": reactions.plus_one,
+        "👎": reactions.minus_one,
+        "😄": reactions.laugh,
+        "🎉": reactions.hooray,
+        "😕": reactions.confused,
+        "❤️": reactions.heart,
+        "🚀": reactions.rocket,
+        "👀": reactions.eyes,
+    }

@@ -8,7 +8,9 @@ from discord.abc import MISSING
 from discord.ui import ActionRow, LayoutView, Select, View
 from discord.ui.item import ContainedItemCallbackType
 from discord.ui.select import SelectCallbackDecorator
+from githubkit import Response
 
+from ghutils.utils.github import is_last_page
 from ghutils.utils.types import AsyncCallable
 
 logger = logging.getLogger(__name__)
@@ -17,7 +19,7 @@ logger = logging.getLogger(__name__)
 PREVIOUS_PAGE_VALUE = "e4215656-23ba-4a3d-8386-795778944b4b"
 NEXT_PAGE_VALUE = "1e1f5d4c-e908-42cf-8d6c-8b66aadf0998"
 
-MAX_PAGE_LENGTH = 23
+MAX_PER_PAGE = 23
 
 
 type PageGetter[V: View | LayoutView] = AsyncCallable[
@@ -30,6 +32,7 @@ class PaginatedSelect[V: View | LayoutView](Select[V]):
     _inner_callback: ContainedItemCallbackType[V | ActionRow[Any], Self] | None
     _page_getter: PageGetter[V] | None
     _page_cache: dict[int, list[SelectOption]]
+    _placeholder: str | None
 
     _page: int
     _selected_page: int | None
@@ -39,18 +42,22 @@ class PaginatedSelect[V: View | LayoutView](Select[V]):
         self,
         *,
         custom_id: str = MISSING,
-        placeholder: None = None,
+        placeholder: str | None = None,
         min_values: Literal[0, 1] = 1,
         max_values: Literal[0, 1] = 1,
         options: list[SelectOption] = MISSING,
         disabled: bool = False,
-        required: bool = True,
+        required: bool = MISSING,
         row: int | None = None,
         id: int | None = None,
         inner_callback: ContainedItemCallbackType[V | ActionRow[Any], Self]
         | None = None,
         page_getter: PageGetter[V] | None = None,
     ) -> None:
+        # https://github.com/Rapptz/discord.py/issues/10291
+        if required is MISSING:
+            required = min_values > 0
+
         super().__init__(
             custom_id=custom_id,
             placeholder=placeholder,
@@ -70,6 +77,7 @@ class PaginatedSelect[V: View | LayoutView](Select[V]):
         self._inner_callback = inner_callback
         self._page_getter = page_getter
         self._page_cache = {}
+        self._placeholder = placeholder
         self._page = 1
         self._selected_page = None
         self._selected_index = None
@@ -82,6 +90,21 @@ class PaginatedSelect[V: View | LayoutView](Select[V]):
         """Fetch and switch to page 1."""
         self._page_cache.pop(1, None)
         await self._switch_to_page(interaction, 1)
+
+    def set_last_page(self, page: int, response: Response[Any] | None = None) -> bool:
+        """Set the final page. The page after this one is assumed to be empty.
+
+        Page getters can use this if they're returning a page with less than 23 options
+        that they know in advance is the last page, to prevent the select menu from
+        adding a spurious "next page" option to that page.
+
+        If a GitHub response is given, the pagination headers are checked
+        to see if this is the last page or not.
+        """
+        if response is not None and not is_last_page(response):
+            return False
+        self._page_cache[page + 1] = []
+        return True
 
     def clear_cached_pages(self):
         self._page_cache.clear()
@@ -117,9 +140,9 @@ class PaginatedSelect[V: View | LayoutView](Select[V]):
     @options.setter
     @override
     def options(self, value: list[SelectOption]):
-        if len(value) > MAX_PAGE_LENGTH:
+        if len(value) > MAX_PER_PAGE:
             raise ValueError(
-                f"Pages must not contain more than {MAX_PAGE_LENGTH} options (got {len(value)})"
+                f"Pages must not contain more than {MAX_PER_PAGE} options (got {len(value)})"
             )
 
         assert Select.options.fset is not None
@@ -138,14 +161,14 @@ class PaginatedSelect[V: View | LayoutView](Select[V]):
         if self.options and (
             self.options[0].value == PREVIOUS_PAGE_VALUE
             or self.options[-1].value == NEXT_PAGE_VALUE
-            or len(self.options) > MAX_PAGE_LENGTH
+            or len(self.options) > MAX_PER_PAGE
         ):
             return
 
         # NOTE: we need to check this *before* mutating self.options
         if (
             # only allow going to the next page if the current page is full
-            len(self.options) == MAX_PAGE_LENGTH
+            len(self.options) == MAX_PER_PAGE
             # and either the next page has values or we haven't fetched it yet
             and self._page_cache.get(self._page + 1, True)
         ):
@@ -254,9 +277,9 @@ class PaginatedSelect[V: View | LayoutView](Select[V]):
             assert self._page_getter
             assert self.view
             options = await self._page_getter(self.view, interaction, self, page)
-            if len(options) > MAX_PAGE_LENGTH:
+            if len(options) > MAX_PER_PAGE:
                 raise ValueError(
-                    f"Pages must not contain more than {MAX_PAGE_LENGTH} options (got {len(options)})"
+                    f"Pages must not contain more than {MAX_PER_PAGE} options (got {len(options)})"
                 )
             self._page_cache[page] = options
 
@@ -279,10 +302,10 @@ class PaginatedSelect[V: View | LayoutView](Select[V]):
                 0 if self._selected_page < page else -1
             ].description = f"(selected on page {self._selected_page})"
         else:
-            self.placeholder = None
+            self.placeholder = self._placeholder
 
     def _clear_remote_page_selection(self):
-        self.placeholder = None
+        self.placeholder = self._placeholder
 
         if self.options[0].value == PREVIOUS_PAGE_VALUE:
             self.options[0].description = None
@@ -298,6 +321,7 @@ def paginated_select[
     *,
     options: list[SelectOption] = MISSING,
     custom_id: str = MISSING,
+    placeholder: str | None = None,
     min_values: Literal[0, 1] = 1,
     max_values: Literal[0, 1] = 1,
     disabled: bool = False,
@@ -308,6 +332,7 @@ def paginated_select[
         select = PaginatedSelect[Any](
             options=options,
             custom_id=custom_id,
+            placeholder=placeholder,
             min_values=min_values,
             max_values=max_values,
             disabled=disabled,
@@ -315,6 +340,13 @@ def paginated_select[
             id=id,
             inner_callback=inner_callback,
         )
+
+        # hack: View only adds items as children if __discord_ui_model_type__ is set
+        def model_type(*args: Any, **kwargs: Any):
+            raise AssertionError("This should never be called")
+
+        setattr(select, "__discord_ui_model_type__", model_type)
+
         return select  # pyright: ignore[reportReturnType]
 
     return decorator

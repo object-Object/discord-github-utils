@@ -1,0 +1,23 @@
+{
+    "Paginated Select": {
+        "prefix": "paginated_select",
+        "body": [
+            "@paginated_select()",
+            "async def $1_select(",
+            "    self,",
+            "    interaction: Interaction,",
+            "    select: PaginatedSelect[Any],",
+            "):",
+            "    ${0:...}",
+            "",
+            "@$1_select.page_getter()",
+            "async def $1_select_page_getter(",
+            "    self,",
+            "    interaction: Interaction,",
+            "    select: PaginatedSelect[Any],",
+            "    page: int,",
+            ") -> list[SelectOption]:",
+            "    ...",
+        ],
+    },
+}

@@ -134,7 +134,7 @@ class RefreshIssuesButton(
                 contents = await create_issue_embeds(github, interaction, self.message)
                 await contents.edit_original_response(interaction, view=self.view)
             except Exception:
-                await interaction.response.edit_message(view=self.view)
+                await interaction.edit_original_response(view=self.view)
                 raise
 
 

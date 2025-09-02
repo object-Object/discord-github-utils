@@ -64,6 +64,20 @@ gh-user_parameter-description_user =
 gh-user_parameter-description_visibility =
     {-parameter-description_visibility}
 
+# /gh release
+
+gh-release_description =
+    Get a link to a GitHub release, or open a menu to select one.
+
+gh-release_parameter-description_repo =
+    Repository to search in (`owner/repo`).
+
+gh-release_parameter-description_tag =
+    Tag name to get the release for. If not provided, opens a menu to select a release.
+
+gh-release_parameter-description_visibility =
+    {-parameter-description_visibility}
+
 # /gh login
 
 gh-login_description =
@@ -124,7 +138,7 @@ gh-actions_description =
 # /gh actions artifact
 
 gh-actions-artifact_description =
-    Get a link to download a workflow artifact.
+    Open a menu to select a GitHub Actions workflow artifact.
 
 gh-actions-artifact_parameter-description_repo =
     Repository to search in (`owner/repo`).

@@ -16,13 +16,12 @@ from yarl import URL
 from ghutils.core.bot import GHUtilsBot
 from ghutils.ui.components.artifacts import WORKFLOW_PREFIX, ArtifactContainer
 from ghutils.ui.components.paginated_select import (
-    MAX_PAGE_LENGTH,
+    MAX_PER_PAGE,
     PaginatedSelect,
     paginated_select,
 )
 from ghutils.ui.components.visibility import add_visibility_buttons
 from ghutils.utils.discord.commands import AnyInteractionCommand
-from ghutils.utils.github import gh_request
 from ghutils.utils.strings import join_truthy, truncate_str
 
 
@@ -185,10 +184,7 @@ class GetArtifactView(LayoutView):
 
     workflow_row = ActionRow[Any]()
 
-    @paginated_select(
-        min_values=1,
-        max_values=1,
-    )
+    @paginated_select()
     async def workflow_select(
         self,
         interaction: Interaction,
@@ -211,17 +207,16 @@ class GetArtifactView(LayoutView):
         select: PaginatedSelect[Any],
         page: int,
     ) -> list[SelectOption]:
-        workflows = (
-            await self.github.rest.actions.async_list_repo_workflows(
-                owner=self.repo.owner.login,
-                repo=self.repo.name,
-                per_page=MAX_PAGE_LENGTH,
-                page=page,
-            )
-        ).parsed_data.workflows
+        response = await self.github.rest.actions.async_list_repo_workflows(
+            owner=self.repo.owner.login,
+            repo=self.repo.name,
+            per_page=MAX_PER_PAGE,
+            page=page,
+        )
+        select.set_last_page(page, response)
 
         options = list[SelectOption]()
-        for workflow in workflows:
+        for workflow in response.parsed_data.workflows:
             self.workflows[workflow.id] = workflow
             options.append(
                 SelectOption(
@@ -240,10 +235,7 @@ class GetArtifactView(LayoutView):
 
     branch_row = ActionRow[Any]()
 
-    @paginated_select(
-        min_values=0,
-        max_values=1,
-    )
+    @paginated_select(min_values=0)
     async def branch_select(
         self,
         interaction: Interaction,
@@ -265,15 +257,14 @@ class GetArtifactView(LayoutView):
         select: PaginatedSelect[Any],
         page: int,
     ) -> list[SelectOption]:
-        branches = await gh_request(
-            self.github.rest.repos.async_list_branches(
-                owner=self.repo.owner.login,
-                repo=self.repo.name,
-                per_page=MAX_PAGE_LENGTH,
-                page=page,
-            )
+        response = await self.github.rest.repos.async_list_branches(
+            owner=self.repo.owner.login,
+            repo=self.repo.name,
+            per_page=MAX_PER_PAGE,
+            page=page,
         )
-        return [SelectOption(label=branch.name) for branch in branches]
+        select.set_last_page(page, response)
+        return [SelectOption(label=branch.name) for branch in response.parsed_data]
 
     # artifact
 
@@ -281,10 +272,7 @@ class GetArtifactView(LayoutView):
 
     artifact_select_row = ActionRow[Any]()
 
-    @paginated_select(
-        min_values=1,
-        max_values=1,
-    )
+    @paginated_select()
     async def artifact_select(
         self,
         interaction: Interaction,
@@ -308,18 +296,19 @@ class GetArtifactView(LayoutView):
         if not self.workflow_run:
             return []
 
-        artifacts = (
-            await self.github.rest.actions.async_list_workflow_run_artifacts(
-                owner=self.repo.owner.login,
-                repo=self.repo.name,
-                run_id=self.workflow_run.id,
-                per_page=MAX_PAGE_LENGTH,
-                page=page,
-            )
-        ).parsed_data.artifacts
+        response = await self.github.rest.actions.async_list_workflow_run_artifacts(
+            owner=self.repo.owner.login,
+            repo=self.repo.name,
+            run_id=self.workflow_run.id,
+            per_page=MAX_PER_PAGE,
+            page=page,
+        )
+        artifacts = response.parsed_data.artifacts
 
         if not artifacts:
             return []
+
+        select.set_last_page(page, response)
 
         options = list[SelectOption]()
         for artifact in artifacts:

@@ -72,7 +72,7 @@ constructs==10.3.0
     # via aws-cdk-lib
 cryptography==43.0.0
     # via pyjwt
-discord-py==2.6.2
+discord-py==2.6.3
     # via ghutils-bot
 distlib==0.3.8
     # via virtualenv
