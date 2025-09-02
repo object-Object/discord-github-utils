@@ -18,6 +18,8 @@ def set_embed_author(embed: Embed, user: SimpleUser):
     return embed
 
 
+_NEWLINE_PATTERN = re.compile(r"\n[ \t]*\n([ \t]*\n)+")
+
 _NEWLINE_HEADING_PATTERN = re.compile(r"(\n|^)\n+(#+ +\S)")
 
 
@@ -34,6 +36,7 @@ def truncate_markdown_description(text: str | None, limit: int = 256) -> str | N
         return None
 
     text = reflow_markdown(text)
+    text = _NEWLINE_PATTERN.sub("\n\n", text)
     text = _NEWLINE_HEADING_PATTERN.sub(r"\1\2", text)
     text = text.strip()
 
