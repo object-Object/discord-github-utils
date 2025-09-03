@@ -66,7 +66,7 @@ class RepositoryTransformer(Transformer):
             try:
                 result = await gh_request(
                     github.rest.search.async_repos(
-                        query,
+                        q=query,
                         per_page=25,
                     )
                 )
@@ -122,7 +122,7 @@ class UserTransformer(Transformer):
             try:
                 result = await gh_request(
                     github.rest.search.async_users(
-                        value,
+                        q=value,
                         per_page=25,
                     )
                 )

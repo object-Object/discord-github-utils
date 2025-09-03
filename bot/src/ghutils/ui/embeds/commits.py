@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime
 from typing import Any
 
 from discord import Embed
@@ -13,7 +12,6 @@ from ghutils.utils.discord.embeds import set_embed_author, truncate_markdown_des
 from ghutils.utils.github import (
     CommitCheckState,
     RepositoryName,
-    SmartPaginator,
     gh_request,
     shorten_sha,
 )
@@ -48,7 +46,7 @@ async def create_commit_embed(
 
     if (author := commit.commit.author) and author.date:
         try:
-            embed.timestamp = datetime.fromisoformat(author.date)
+            embed.timestamp = author.date
         except ValueError:
             pass
 
@@ -73,13 +71,12 @@ async def _get_commit_check_state(
 
     # checks
     try:
-        async for suite in SmartPaginator(
+        async for suite in github.rest.paginate(
             github.rest.checks.async_list_suites_for_ref,
+            map_func=lambda r: r.parsed_data.check_suites,
             owner=repo.owner,
             repo=repo.repo,
             ref=sha,
-            map_func=lambda resp: resp.parsed_data.check_suites,
-            limit_func=lambda resp: resp.parsed_data.total_count,
         ):
             match suite.status:
                 case "queued":

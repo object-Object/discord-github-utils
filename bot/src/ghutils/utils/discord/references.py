@@ -174,7 +174,7 @@ class IssueOrPRReferenceTransformer[T](ReferenceTransformer[T]):
     ) -> list[tuple[str | int, str]]:
         results = await gh_request(
             github.rest.search.async_issues_and_pull_requests(
-                f"{search} is:{self.issue_type} repo:{repo}",
+                q=f"{search} is:{self.issue_type} repo:{repo}",
                 per_page=25,
             )
         )
@@ -264,7 +264,7 @@ class CommitReferenceTransformer(ReferenceTransformer[Commit]):
     ) -> list[tuple[str | int, str]]:
         if search:
             resp = await github.rest.search.async_commits(
-                f"{search} repo:{repo}",
+                q=f"{search} repo:{repo}",
                 per_page=25,
             )
             results = resp.parsed_data.items

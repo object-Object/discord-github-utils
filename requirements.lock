@@ -21,6 +21,7 @@ aiosignal==1.3.1
 annotated-types==0.7.0
     # via pydantic
 anyio==4.4.0
+    # via githubkit
     # via httpx
     # via starlette
     # via watchfiles
@@ -87,7 +88,7 @@ fluent-syntax==0.19.0
 frozenlist==1.4.1
     # via aiohttp
     # via aiosignal
-githubkit==0.11.8
+githubkit==0.13.1
     # via ghutils-bot
 greenlet==3.0.3 ; (python_full_version < '3.13' and platform_machine == 'AMD64') or (python_full_version < '3.13' and platform_machine == 'WIN32') or (python_full_version < '3.13' and platform_machine == 'aarch64') or (python_full_version < '3.13' and platform_machine == 'amd64') or (python_full_version < '3.13' and platform_machine == 'ppc64le') or (python_full_version < '3.13' and platform_machine == 'win32') or (python_full_version < '3.13' and platform_machine == 'x86_64')
     # via sqlalchemy
