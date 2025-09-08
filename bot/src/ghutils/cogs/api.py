@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import logging
+import math
+import sys
 from dataclasses import dataclass, field
 from timeit import default_timer as timer
 from typing import Annotated
@@ -70,10 +72,12 @@ async def get_health(
     except Exception as e:
         logger.error(f"Failed to make database request: {e.__class__.__name__}: {e}")
         response.status_code = HTTP_500_INTERNAL_SERVER_ERROR
-        database_latency = float("inf")
+        database_latency = sys.float_info.max
 
     return HealthInfo(
-        websocket_latency=bot.latency,
+        websocket_latency=bot.latency
+        if math.isfinite(bot.latency)
+        else sys.float_info.max,
         database_latency=database_latency,
     )
 
