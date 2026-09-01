@@ -14,7 +14,7 @@ def main():
     logger.info("Ready.")
     app = cdk.App()
 
-    CodeDeployStack.default_prod_stack(app)
+    CodeDeployStack.default_prod_stack(app, immutable_subject_claims=False)
 
     logger.info("Synthesizing.")
     app.synth()
