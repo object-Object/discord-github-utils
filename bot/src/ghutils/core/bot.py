@@ -1,7 +1,7 @@
 import logging
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 import yaml
@@ -48,7 +48,7 @@ class GHUtilsBot(Bot):
             tree_cls=GHUtilsCommandTree,
         )
         self.engine = create_engine(self.env.db_url)
-        self.start_time = datetime.now()
+        self.start_time = datetime.now(UTC)
         self.language_colors = self._load_language_colors()
         self._custom_emoji = dict[CustomEmoji, Emoji]()
 
