@@ -1,7 +1,7 @@
 import logging
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 import yaml
@@ -10,12 +10,12 @@ from discord.app_commands import AppCommandContext, AppInstallationType
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, NoEntryPointError
 from githubkit import GitHub
+from httpx import get
 from sqlmodel import Session, create_engine
 
 from ghutils import cogs
 from ghutils.common.__version__ import VERSION
 from ghutils.db.models import UserGitHubTokens
-from ghutils.resources import load_resource
 from ghutils.utils.imports import iter_modules
 
 from .env import GHUtilsEnv
@@ -48,7 +48,7 @@ class GHUtilsBot(Bot):
             tree_cls=GHUtilsCommandTree,
         )
         self.engine = create_engine(self.env.db_url)
-        self.start_time = datetime.now()
+        self.start_time = datetime.now(UTC)
         self.language_colors = self._load_language_colors()
         self._custom_emoji = dict[CustomEmoji, Emoji]()
 
@@ -125,8 +125,13 @@ class GHUtilsBot(Bot):
 
     def _load_language_colors(self) -> dict[str, Color]:
         logger.info("Loading repo language colors")
+
+        languages = get(
+            "https://raw.githubusercontent.com/github-linguist/linguist/refs/heads/main/lib/linguist/languages.yml"
+        )
+
         langs: dict[str, dict[str, Any]] = yaml.load(
-            load_resource("languages.yml"), Loader=yaml.CLoader
+            languages.text, Loader=yaml.CLoader
         )
 
         return {
