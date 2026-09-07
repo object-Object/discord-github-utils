@@ -39,10 +39,21 @@ def create_release_embed(
         assets.append(("**Source code** (zip)", release.zipball_url, ""))
     if release.tarball_url:
         assets.append(("**Source code** (tar.gz)", release.tarball_url, ""))
+
+    assets_str = "\n".join(f"- [{name}]({url}){size}" for name, url, size in assets)
+
+    if len(assets_str) > 1024:
+        view_str = f"\n[Show all {len(assets)} assets]({release.html_url})"
+
+        assets_str = (
+            "\n".join(truncate_str(assets_str, 1024 - len(view_str)).split("\n")[:-1])
+            + view_str
+        )
+
     if assets:
         embed.add_field(
             name="Assets",
-            value="\n".join(f"- [{name}]({url}){size}" for name, url, size in assets),
+            value=assets_str,
         )
 
     if release.reactions and release.reactions.total_count > 0:
