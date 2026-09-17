@@ -4,13 +4,13 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 
+import httpx
 import yaml
 from discord import Color, CustomActivity, Emoji, Intents, Interaction
 from discord.app_commands import AppCommandContext, AppInstallationType
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, NoEntryPointError
 from githubkit import GitHub
-from httpx import get
 from sqlmodel import Session, create_engine
 
 from ghutils import cogs
@@ -126,7 +126,7 @@ class GHUtilsBot(Bot):
     def _load_language_colors(self) -> dict[str, Color]:
         logger.info("Loading repo language colors")
 
-        languages = get(
+        languages = httpx.get(
             "https://raw.githubusercontent.com/github-linguist/linguist/refs/heads/main/lib/linguist/languages.yml"
         )
 
