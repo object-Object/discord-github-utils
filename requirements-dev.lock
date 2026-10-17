@@ -42,9 +42,9 @@ aws-cdk-cloud-assembly-schema==36.0.25
     # via aws-cdk-lib
 aws-cdk-github-oidc==2.4.1
     # via ghutils-infrastructure
-    # via object-ci
 aws-cdk-lib==2.158.0
     # via aws-cdk-github-oidc
+    # via cdk-github-oidc
     # via ghutils-infrastructure
     # via object-ci
 babel==2.17.0
@@ -52,6 +52,8 @@ babel==2.17.0
     # via ghutils-bot
 cattrs==23.2.3
     # via jsii
+cdk-github-oidc==1.2.0
+    # via object-ci
 certifi==2024.6.2
     # via httpcore
     # via httpx
@@ -65,12 +67,13 @@ charset-normalizer==3.4.1
 click==8.1.7
     # via typer
     # via uvicorn
-colorama==0.4.6 ; sys_platform == 'win32' or platform_system == 'Windows'
+colorama==0.4.6 ; sys_platform == 'win32'
     # via click
     # via uvicorn
-constructs==10.3.0
+constructs==10.8.1
     # via aws-cdk-github-oidc
     # via aws-cdk-lib
+    # via cdk-github-oidc
 cryptography==43.0.0
     # via pyjwt
 discord-py==2.6.3
@@ -121,19 +124,18 @@ idna==3.7
     # via httpx
     # via requests
     # via yarl
-importlib-resources==6.4.5
-    # via jsii
 jinja2==3.1.4
     # via fastapi
 joblib==1.4.2
     # via scikit-learn
-jsii==1.103.1
+jsii==1.140.0
     # via aws-cdk-asset-awscli-v1
     # via aws-cdk-asset-kubectl-v20
     # via aws-cdk-asset-node-proxy-agent-v6
     # via aws-cdk-cloud-assembly-schema
     # via aws-cdk-github-oidc
     # via aws-cdk-lib
+    # via cdk-github-oidc
     # via constructs
 markdown-it-py==3.0.0
     # via rich
@@ -154,7 +156,7 @@ numpy==1.26.4
     # via pylette
     # via scikit-learn
     # via scipy
-object-ci @ git+https://github.com/object-Object/ci@ff3bc4f4204b3ba7153c247c1a73af649e5d27ad
+object-ci @ git+https://github.com/object-Object/ci@3c5a0abd6629b741e23fb8339ca8b07b9b83a978
     # via ghutils-infrastructure
 orjson==3.10.5
     # via fastapi
@@ -174,6 +176,7 @@ publication==0.0.3
     # via aws-cdk-cloud-assembly-schema
     # via aws-cdk-github-oidc
     # via aws-cdk-lib
+    # via cdk-github-oidc
     # via constructs
     # via jsii
 pycparser==2.22 ; platform_python_implementation != 'PyPy'
@@ -238,7 +241,7 @@ typeguard==2.13.3
     # via aws-cdk-cloud-assembly-schema
     # via aws-cdk-github-oidc
     # via aws-cdk-lib
-    # via constructs
+    # via cdk-github-oidc
     # via jsii
 typer==0.12.5
     # via fastapi-cli
